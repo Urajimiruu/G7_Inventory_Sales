@@ -1,0 +1,111 @@
+body {
+  background-image: url(https://www.hdwallpapers.in/download/trees_forest_blue_starry_sky_reflection_river_anime_nature_hd_anime-1920x1080.jpg);
+}
+
+/* Login Boxes */
+
+.centered-box {
+  display: flex;
+  justify-content: center; 
+  align-items: flex-start; 
+  gap: 1rem; 
+}
+
+.box {
+  background-color: rgba(99, 53, 226, 0.5); /* makes opacity 50% */
+  backdrop-filter: blur(10px);          /* blur the background behind */
+  -webkit-backdrop-filter: blur(10px);  /* for Safari */
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  padding: 4rem;
+  border-radius: 1.2rem;
+  width: 35%;
+  height: 80vh;
+  max-width: 120rem;
+  display: block;
+  margin-top: 4%;
+  text-align: center;
+  color: white;
+}
+
+.box .h1 {
+  font-size: 3rem;
+}
+
+.box-2 {
+  background-color: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  padding: 4rem;
+  border-radius: 1.2rem;
+  width: 35%;
+  height: 80vh;
+  max-width: 120rem;
+  display: block;
+  margin-top: 4%;
+  text-align: center;
+}
+
+.box-2 .h1 {
+  font-size: 3rem;
+  color: white;
+}
+
+.textbox {
+    padding: 6px 12px;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.5;
+    color: white;
+    background-clip: padding-box;
+    background-color: rgba(255, 255, 255, 0.15); 
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    appearance: none;
+    width: 90%;
+    height: 3em;
+    border-radius: 50px;
+    transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+    :focus{
+        color: #212529;
+        background-color: #fff;
+        border-color: #86b7fe;
+        outline: 0;
+        box-shadow: 0 0 0 0.25rem rgb(13 110 253 / 25%);
+    }
+}
+
+input::placeholder {
+  color: white;
+}
+
+
+.signin {
+  padding: 1rem 2rem;
+  font-weight: 700;
+  width: 90%;
+  height: 3em;
+  background: rgb(255, 255, 255);
+  color: blueviolet;
+  cursor: pointer;
+  border-radius: 0.5rem;
+  border-bottom: 2px solid blueviolet;
+  border-right: 2px solid blueviolet;
+  border-top: 2px solid white;
+  border-left: 2px solid white;
+  transition-duration: 1s;
+  transition-property: border-top, border-left, border-bottom, border-right,
+    box-shadow;
+}
+
+.btn:hover {
+  border-top: 2px solid blueviolet;
+  border-left: 2px solid blueviolet;
+  border-bottom: 2px solid rgb(238, 103, 238);
+  border-right: 2px solid rgb(238, 103, 238);
+  box-shadow: rgba(240, 46, 170, 0.4) 5px 5px, rgba(240, 46, 170, 0.3) 10px 10px,
+    rgba(240, 46, 170, 0.2) 15px 15px;
+} 
