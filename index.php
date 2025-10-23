@@ -26,7 +26,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     
     if (strtolower($user["role"]) === "admin") {
-        header("Location: mainbranchdb.php");
+        header("Location: admin_home.php");
         exit();
     } elseif (strtolower($user["role"]) === "shop") {
         header("Location: branchdb.php");
@@ -48,8 +48,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&display=swap"
     rel="stylesheet"
   />
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="general.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/general.css">
   <title>Login Page</title>
 </head>
 
