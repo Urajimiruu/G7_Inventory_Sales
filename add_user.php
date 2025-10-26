@@ -3,16 +3,17 @@
 require_once "db_connection.php";
 
 // initialize variables
-$username = $password = $role = "";
+$username = $password = $role = $phone_number = "";
 $branch_id = null;
 $errors = [];
 $success = "";
 
 // handle form submission
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $username  = trim($_POST["username"]);
-    $password  = trim($_POST["password"]);
-    $role      = $_POST["role"];
+    $username      = trim($_POST["username"]);
+    $password      = trim($_POST["password"]);
+    $role          = $_POST["role"];
+    $phone_number  = trim($_POST["phone_number"]);
 
     // if role is shop, take branch_id, else set null
     if ($role === "shop") {
@@ -22,18 +23,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     // ✅ Validations
-    if (empty($username)) {
-        $errors[] = "Username is required.";
+    if (empty($username)) $errors[] = "Username is required.";
+    if (empty($password)) $errors[] = "Password is required.";
+    if (empty($role)) $errors[] = "Role is required.";
+    if (empty($phone_number)) {
+        $errors[] = "Phone number is required.";
+    } elseif (!preg_match('/^\+63\d{10}$/', $phone_number)) {
+        $errors[] = "Invalid phone number format. Use +63 followed by 10 digits (e.g. +639123456789).";
     }
-    if (empty($password)) {
-        $errors[] = "Password is required.";
-    }
-    if (empty($role)) {
-        $errors[] = "Role is required.";
-    }
-    if ($role === "shop" && empty($branch_id)) {
-        $errors[] = "Branch is required for shop users.";
-    }
+    if ($role === "shop" && empty($branch_id)) $errors[] = "Branch is required for shop users.";
 
     // ✅ Check duplicate username
     if (empty($errors)) {
@@ -41,10 +39,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $check->bind_param("s", $username);
         $check->execute();
         $check->store_result();
-
-        if ($check->num_rows > 0) {
-            $errors[] = "Username already exists.";
-        }
+        if ($check->num_rows > 0) $errors[] = "Username already exists.";
         $check->close();
     }
 
@@ -53,16 +48,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $password_hash = password_hash($password, PASSWORD_BCRYPT);
 
         if ($branch_id !== null) {
-            $stmt = $conn->prepare("INSERT INTO Users (username, password_hash, role, branch_id) VALUES (?, ?, ?, ?)");
-            $stmt->bind_param("sssi", $username, $password_hash, $role, $branch_id);
+            $stmt = $conn->prepare("INSERT INTO Users (username, password_hash, role, branch_id, phone_number)
+                                    VALUES (?, ?, ?, ?, ?)");
+            $stmt->bind_param("sssds", $username, $password_hash, $role, $branch_id, $phone_number);
         } else {
-            $stmt = $conn->prepare("INSERT INTO Users (username, password_hash, role, branch_id) VALUES (?, ?, ?, NULL)");
-            $stmt->bind_param("sss", $username, $password_hash, $role);
+            $stmt = $conn->prepare("INSERT INTO Users (username, password_hash, role, branch_id, phone_number)
+                                    VALUES (?, ?, ?, NULL, ?)");
+            $stmt->bind_param("ssss", $username, $password_hash, $role, $phone_number);
         }
 
         if ($stmt->execute()) {
             $success = "✅ User <strong>$username</strong> created successfully!";
-            $username = $password = $role = "";
+            $username = $password = $role = $phone_number = "";
             $branch_id = null;
         } else {
             $errors[] = "Database error: " . $stmt->error;
@@ -79,81 +76,76 @@ $roles = ["admin", "shop"];
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Add User</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 30px; }
+        body { font-family: Arial; background: #f4f4f4; padding: 20px; }
+        form { background: white; padding: 20px; border-radius: 10px; max-width: 400px; margin: auto; }
+        input, select { width: 100%; padding: 10px; margin: 8px 0; }
+        button { padding: 10px; background: #007BFF; color: white; border: none; cursor: pointer; }
+        button:hover { background: #0056b3; }
         .error { color: red; }
         .success { color: green; }
-        form { max-width: 400px; padding: 15px; border: 1px solid #ccc; border-radius: 8px; }
-        label { display: block; margin-top: 10px; }
-        input, select { width: 100%; padding: 8px; margin-top: 5px; }
-        input[type=submit] { margin-top: 15px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; }
-        input[type=submit]:hover { background: #218838; }
     </style>
-    <script>
-        function toggleBranchDropdown() {
-            let role = document.getElementById("role").value;
-            let branchDropdown = document.getElementById("branch_id");
-
-            if (role === "admin") {
-                branchDropdown.disabled = true;
-                branchDropdown.value = ""; // clear selection
-            } else {
-                branchDropdown.disabled = false;
-            }
-        }
-    </script>
 </head>
 <body>
+    <h2>Add New User</h2>
 
-    <h2>Create New User</h2>
-
-    <!-- Show errors -->
     <?php if (!empty($errors)): ?>
         <div class="error">
             <ul>
                 <?php foreach ($errors as $e): ?>
-                    <li><?php echo $e; ?></li>
+                    <li><?= htmlspecialchars($e) ?></li>
                 <?php endforeach; ?>
             </ul>
         </div>
     <?php endif; ?>
 
-    <!-- Show success -->
     <?php if (!empty($success)): ?>
-        <p class="success"><?php echo $success; ?></p>
+        <div class="success"><?= $success ?></div>
     <?php endif; ?>
 
-    <!-- User Form -->
-    <form method="POST" action="">
-        <label>Username:</label>
-        <input type="text" name="username" value="<?php echo htmlspecialchars($username); ?>" required>
+    <form method="post">
+        <label>Username</label>
+        <input type="text" name="username" value="<?= htmlspecialchars($username) ?>">
 
-        <label>Password:</label>
-        <input type="password" name="password" required>
+        <label>Password</label>
+        <input type="password" name="password" value="">
 
-        <label>Role:</label>
-        <select name="role" id="role" onchange="toggleBranchDropdown()" required>
+        <label>Phone Number</label>
+        <input type="text" name="phone_number" placeholder="+639123456789" value="<?= htmlspecialchars($phone_number) ?>">
+
+        <label>Role</label>
+        <select name="role" id="role" onchange="toggleBranch()">
             <option value="">-- Select Role --</option>
             <?php foreach ($roles as $r): ?>
-                <option value="<?php echo $r; ?>" <?php if ($r == $role) echo "selected"; ?>><?php echo ucfirst($r); ?></option>
+                <option value="<?= $r ?>" <?= $role === $r ? 'selected' : '' ?>><?= ucfirst($r) ?></option>
             <?php endforeach; ?>
         </select>
 
-        <label>Branch:</label>
-        <select name="branch_id" id="branch_id" <?php echo ($role === "admin") ? "disabled" : ""; ?>>
-            <option value="">-- Select Branch --</option>
-            <?php while ($row = $branches->fetch_assoc()): ?>
-                <option value="<?php echo $row['branch_id']; ?>" <?php if ($row['branch_id'] == $branch_id) echo "selected"; ?>>
-                    <?php echo htmlspecialchars($row['branch_name']); ?>
-                </option>
-            <?php endwhile; ?>
-        </select>
+        <div id="branchDiv" style="display: none;">
+            <label>Branch</label>
+            <select name="branch_id">
+                <option value="">-- Select Branch --</option>
+                <?php while ($b = $branches->fetch_assoc()): ?>
+                    <option value="<?= $b['branch_id'] ?>" <?= $branch_id == $b['branch_id'] ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($b['branch_name']) ?>
+                    </option>
+                <?php endwhile; ?>
+            </select>
+        </div>
 
-        <input type="submit" value="Create User">
+        <button type="submit">Add User</button>
     </form>
 
+    <script>
+        function toggleBranch() {
+            const role = document.getElementById("role").value;
+            document.getElementById("branchDiv").style.display = role === "shop" ? "block" : "none";
+        }
+        toggleBranch();
+    </script>
 </body>
 </html>
