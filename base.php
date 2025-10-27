@@ -33,9 +33,9 @@ if (!isset($_SESSION["user_id"]) || $_SESSION["role"] !== "admin") {
           <li class="subnav">
             <button class="subnavbtn">Inventory &#8595;</button>
             <ul class="subnav-content">
-              <a href="#">Main Inventory</a>
-              <a href="#">Branch Inventory</a>
-              <a href="#">Stock Transfer</a>
+              <a href="admin_main_inventory.php">Main Inventory</a>
+              <a href="admin_branch_inventory.php">Branch Inventory</a>
+              <a href="admin_stock_transfer.php">Stock Transfer</a>
             </ul>
           </li>
 

@@ -28,33 +28,23 @@
         </div>
 
         <!-- Table Section -->
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Product</th>
-                <th>Branch</th>
-                <th>Quantity</th>
-                <th>Unit Price</th>
-                <th>Total</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>2025-10-20</td>
-                <td>Product X</td>
-                <td>Lipa</td>
-                <td>10</td>
-                <td>$15.00</td>
-                <td>$150.00</td>
-                <td>
+        <section class="card">
+      
+      <table class="zebra" aria-label="Zebra table">
+        <thead>
+          <tr><th>Cost</th><th>Product</th><th>Branch</th><th class="right">Quantity</th><th>Unit Price</th><th>Total</th><th>Action</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Product C</td><td class="muted">2</td><td>$10</td><td class="right muted">$20</td><td>1</td><td>100</td><td><button class="edit-btn">Edit</button><button class="delete-btn">Delete</button></td></tr>
+          <tr><td>Product C</td><td class="muted">2</td><td>$10</td><td class="right muted">$20</td><td>1</td><td>100</td><td><button class="edit-btn">Edit</button><button class="delete-btn">Delete</button></td></tr>
+          <tr><td>Product C</td><td class="muted">2</td><td>$10</td><td class="right muted">$20</td><td>1</td><td>100</td><td><button class="edit-btn">Edit</button><button class="delete-btn">Delete</button></td></tr>
+        </tbody>
+      </table>
+    </section>
+      </section>
+
+
+      <!-- <td>
                   <button class="edit-btn">Edit</button>
                   <button class="delete-btn">Delete</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
+                </td> -->
