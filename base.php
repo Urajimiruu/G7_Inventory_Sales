@@ -14,6 +14,7 @@ if (!isset($_SESSION["user_id"]) || $_SESSION["role"] !== "admin") {
   <title>Main Admin Dashboard</title>
   <link rel="stylesheet" href="css/admin.css">
   <!-- <link rel="stylesheet" href="css/general.css"> -->
+  
 </head>
 <body>
   <div class="container">
@@ -43,8 +44,8 @@ if (!isset($_SESSION["user_id"]) || $_SESSION["role"] !== "admin") {
           <li class="subnav">
             <button class="subnavbtn">Reports &#8595;</button>
             <ul class="subnav-content">
-              <a href="#">Sales</a>
-              <a href="#">Profit/Loss</a>
+              <a href="admin_sales.php">Sales</a>
+              <a href="admin_profit_loss.php">Profit/Loss</a>
               <a href="#">Stock Transfers</a>
               <a href="#">Inventory</a>
             </ul>
