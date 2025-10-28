@@ -3,9 +3,10 @@ session_start();
 require 'db_connection.php'; 
 
 $error = "";
+$showOTPModal = false;
 
-// Handle login form submission
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
+// Handle login form
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["username"], $_POST["password"])) {
     $username = trim($_POST["username"]);
     $password = trim($_POST["password"]);
 
@@ -18,13 +19,48 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $user = $result->fetch_assoc();
 
     if ($user && password_verify($password, $user["password_hash"])) {
-        $_SESSION["temp_user"] = $user; // store temporarily until OTP verified
+        // Temporarily store user data until OTP is verified
+        $_SESSION["temp_user"] = [
+            "user_id" => $user["user_id"],
+            "username" => $user["username"],
+            "role" => $user["role"],
+            "branch_id" => $user["branch_id"],
+            "phone_number" => $user["phone_number"]
+        ];
+
         $_SESSION["otp_verified"] = false;
+        $_SESSION["otp_code"] = "123456"; // mock OTP for now
+        $showOTPModal = true;
     } else {
         $error = "Invalid username or password!";
     }
 }
+
+// Handle OTP verification
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["otp_code"])) {
+    if (isset($_SESSION["otp_code"]) && $_POST["otp_code"] === $_SESSION["otp_code"]) {
+        $_SESSION["otp_verified"] = true;
+
+        // Move temp_user info into active session
+        if (isset($_SESSION["temp_user"])) {
+            $_SESSION["user_id"] = $_SESSION["temp_user"]["user_id"];
+            $_SESSION["username"] = $_SESSION["temp_user"]["username"];
+            $_SESSION["role"] = $_SESSION["temp_user"]["role"];
+            $_SESSION["branch_id"] = $_SESSION["temp_user"]["branch_id"];
+            $_SESSION["phone_number"] = $_SESSION["temp_user"]["phone_number"];
+            unset($_SESSION["temp_user"]);
+        }
+
+        header("Location: redirect.php");
+        exit;
+    } else {
+        $error = "Incorrect OTP. Try again.";
+        // Don't reopen modal — just let user reattempt login
+    }
+}
 ?>
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -34,97 +70,58 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
   <link rel="preconnect" href="https://fonts.gstatic.com" />
   <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/general.css">
   <title>Login Page</title>
 </head>
 
 <body>
-<div class="centered-box">
-
-  <div class="box">
-    <h1 class="h1">Welcome!</h1><br><br><br>
-    <h2>Lorem ipsum dolor sit amet, consectetur adipiscing elit...</h2>
+<div class="login-container">
+  <!-- Left -->
+  <div class="login-left">
+    <div class="brand-section">
+      <div class="company-logo"></div>
+      <h1 class="brand-title">BIZZTRACK</h1>
+      <p class="brand-subtitle">Integrated Sales and Inventory Monitoring</p>
+    </div>
   </div>
 
-  <div class="box-2">
-    <h1 class="h1">Login</h1><br><br><br>
+  <!-- Right -->
+  <div class="login-right">
+    <div class="login-box">
+      <h2>USER LOGIN</h2>
+      <?php if (!empty($error)): ?>
+        <p class="error-msg"><?= htmlspecialchars($error) ?></p>
+      <?php endif; ?>
 
-    <?php if (!empty($error)): ?>
-      <p style="color: red; font-weight: bold;"><?= htmlspecialchars($error) ?></p>
-    <?php endif; ?>
+      <form method="POST" action="">
+        <label>USERNAME :</label>
+        <input type="text" name="username" required>
 
-    <form class="login" method="POST" action=""> 
-      <input name="username" value="<?= isset($username) ? htmlspecialchars($username) : '' ?>" 
-             class="textbox" placeholder="Username" required><br><br><br><br>
+        <label>PASSWORD :</label>
+        <input type="password" name="password" required>
 
-      <input type="password" name="password" class="textbox" placeholder="Password" required><br><br><br><br>
-
-      <button class="signin" type="submit">Sign in</button>
-    </form>
-
-    <?php if (isset($_SESSION["temp_user"]) && !$_SESSION["otp_verified"]): ?>
-      <div id="otp-section" style="margin-top:20px;">
-        <h3>Enter OTP</h3>
-        <input type="text" id="otp" maxlength="6" placeholder="6-digit OTP" class="textbox" style="width:200px;"><br><br>
-        <button id="verifyBtn" onclick="verifyOTP()">Verify OTP</button>
-        <button id="resendBtn" onclick="resendOTP()" disabled>Resend OTP (<span id="countdown">30</span>s)</button>
-        <p id="otpMessage" style="color:green;"></p>
-      </div>
-
-      <script>
-      let cooldown = 30;
-      let timer;
-
-      // Automatically send OTP on load
-      window.onload = () => {
-          sendOTP();
-          startCooldown();
-      };
-
-      function sendOTP() {
-        fetch('send_otp.php')
-          .then(res => res.text())
-          .then(data => {
-            document.getElementById('otpMessage').innerText = data;
-          });
-      }
-
-      function verifyOTP() {
-        const otp = document.getElementById('otp').value;
-        fetch('verify_otp.php', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: 'otp=' + otp
-        })
-        .then(res => res.text())
-        .then(data => {
-          document.getElementById('otpMessage').innerText = data;
-          if (data.includes("Login success")) {
-            window.location.href = "redirect.php"; // handles redirect based on role
-          }
-        });
-      }
-
-      function resendOTP() {
-        sendOTP();
-        startCooldown();
-      }
-
-      function startCooldown() {
-        cooldown = 30;
-        document.getElementById('resendBtn').disabled = true;
-        timer = setInterval(() => {
-          cooldown--;
-          document.getElementById('countdown').innerText = cooldown;
-          if (cooldown <= 0) {
-            clearInterval(timer);
-            document.getElementById('resendBtn').disabled = false;
-          }
-        }, 1000);
-      }
-      </script>
-    <?php endif; ?>
+        <button type="submit" class="btn-login">Login</button>
+      </form>
+    </div>
   </div>
 </div>
+
+<!-- OTP Modal -->
+<div id="otpModal" class="modal">
+  <div class="modal-content">
+    <h3>Enter OTP</h3>
+    <form method="POST" action="">
+      <input type="text" name="otp_code" maxlength="6" placeholder="6-digit code" required>
+      <button type="submit">Verify</button>
+    </form>
+  </div>
+</div>
+
+<?php if ($showOTPModal): ?>
+<script>
+  document.getElementById('otpModal').style.display = 'flex';
+</script>
+<?php endif; ?>
+
 </body>
+
 </html>
