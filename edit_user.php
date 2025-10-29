@@ -152,8 +152,10 @@ function toggleBranchDropdown() {
     const role = document.getElementById("role").value;
     document.getElementById("branch_id").disabled = (role === "admin");
 }
+</script>
 
 <script>
+
 document.querySelector('input[name="phone_number"]').addEventListener('input', function(e) {
     let value = e.target.value.replace(/\D/g, ''); // remove non-digit
     if (value.startsWith('63')) value = '+' + value;
@@ -167,7 +169,6 @@ document.querySelector('input[name="phone_number"]').addEventListener('input', f
         e.target.value = formatted;
     }
 });
-</script>
 
 </script>
 
