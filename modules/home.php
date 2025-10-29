@@ -1,4 +1,4 @@
-<div class="dashboard">
-  <h3>Welcome to the Home Dashboard</h3>
-  <p>This section gives an overview of your system’s performance.</p>
+<div class="dashboard"> <!-- display sales data dito -->
+  <h3>System Overview</h3>
+  <p>Dito nakalagay mga details ng system. <br><br>home.php to</p>
 </div>
