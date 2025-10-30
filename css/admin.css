@@ -50,6 +50,12 @@ body {
   padding: 20px 15px;
   flex-grow: 1;
   overflow-y: auto;
+  &::-webkit-scrollbar {
+  display: none;
+  }
+  /* For Internet Explorer, Edge, and Firefox */
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;     /* Firefox */
 }
 
 .sidebar ul li {
