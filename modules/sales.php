@@ -24,6 +24,7 @@
       <div class="filter-right">
         <label>Search:</label>
         <input type="text" name="search" placeholder="Search user or branch...">
+        <button type="button" class="btn btn-primary" onclick="openSaleModal()">+ Add User</button>
       </div>
     </div>
   </form>
@@ -53,9 +54,7 @@
             <td class="right"> $947695.00</td>
             <td><button type="button" class="btn btn-warning btn-sm" onclick="openSaleModal()">Edit</button>
             <button type="button" class="btn btn-danger btn-sm">Delete</button>
-            <?php if ($_SESSION['role'] === 'shop'): ?>
             <button type="button" class="btn btn-success" onclick="saveSale()">Return</button>
-            <?php endif; ?>
           </tr>
           <tr>
             <td>11/4/2025</td>
@@ -66,9 +65,7 @@
             <td class="right">$354834.00</td>
             <td><button type="button" class="btn btn-warning btn-sm" onclick="openSaleModal()">Edit</button>
             <button type="button" class="btn btn-danger btn-sm">Delete</button>
-            <?php if ($_SESSION['role'] === 'shop'): ?>
             <button type="button" class="btn btn-success" onclick="saveSale()">Return</button>
-            <?php endif; ?>
           </tr>
           <tr>
             <td>11/4/2025</td>
@@ -79,9 +76,7 @@
             <td class="right">$5465654.00</td>
             <td><button type="button" class="btn btn-warning btn-sm" onclick="openSaleModal()">Edit</button>
             <button type="button" class="btn btn-danger btn-sm">Delete</button>
-            <?php if ($_SESSION['role'] === 'shop'): ?>
             <button type="button" class="btn btn-success" onclick="saveSale()">Return</button>
-            <?php endif; ?>
           </tr>
         </tbody>
       </table>

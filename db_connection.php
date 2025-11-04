@@ -1,7 +1,7 @@
 <?php
 $servername = "localhost";  // or 127.0.0.1
 $username   = "root";
-$password   = "p@ssw0rd";
+$password   = "Hanab@s3";
 $dbname     = "SalesAndInventory";
 
 // Create connection
