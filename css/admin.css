@@ -163,6 +163,12 @@ body {
   flex-direction: column;
   height: 100vh;
   overflow-y: auto;
+  &::-webkit-scrollbar {
+  display: none;
+  }
+  /* For Internet Explorer, Edge, and Firefox */
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;     /* Firefox */
   background-color: #f4f5f9;
 }
 
@@ -251,3 +257,74 @@ body {
     font-size: 0.85rem;
   }
 }
+
+
+
+
+/* ================== TABLE ================== */
+
+:root{
+    --bg:#f8fafc;
+    --card:#fff;
+    --muted:#64748b;
+    --line:#e6eef6;
+    --accent:#2563eb;
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+  }
+
+  body{background:var(--bg); padding:28px; color:#0f172a;}
+  .table-wrap{max-width:1000px; margin:0 auto; background:var(--card); border-radius:12px; padding:16px; box-shadow:0 6px 24px rgba(2,6,23,0.06);}
+
+  .table-scroll{overflow:auto; -webkit-overflow-scrolling:touch;}
+
+  table.vertical {
+    width:100%;
+    border-collapse:separate; /* keep cells separate so only vertical borders are drawn */
+    border-spacing:0;         /* remove gaps between cells */
+    min-width:700px;
+  }
+
+  /* header styles (also draws the horizontal line) */
+  table.vertical thead th {
+    text-align:left;
+    padding:14px 16px;
+    font-size:13px;
+    letter-spacing:0.2px;
+    color:#0b1220;
+    background:linear-gradient(180deg, #ffffff, #fbfdff);
+    position:sticky;
+    top:0;
+    z-index:2;
+    /* <-- horizontal line under and above the header: change thickness here --> */
+    border-top: 2px solid var(--line);
+    border-bottom: 2px solid var(--line);
+  }
+
+  /* body cell styles */
+  table.vertical tbody td {
+    padding:14px 16px;
+    font-size:14px;
+    color:#0f172a;
+    /* explicitly ensure no horizontal borders in the body rows */
+    border-top: none;
+    border-bottom: none;
+  }
+
+  /* vertical separators: left border on every cell except the first */
+  table.vertical th:not(:first-child),
+  table.vertical td:not(:first-child) {
+    border-left:2px solid var(--line); /* change 1px -> 2px to make vertical lines thicker */
+  }
+
+  /* subtle hover (no horizontal line added) */
+  table.vertical tbody tr:hover td {
+    background: rgba(37,99,235,0.03);
+  }
+
+  .muted { color: var(--muted); font-size:13px; }
+  .right { text-align: right; }
+
+  @media (max-width:640px){
+    table.vertical thead th, table.vertical tbody td { padding:10px 12px; }
+    .table-wrap { padding:12px; border-radius:10px; }
+  }
