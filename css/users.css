@@ -1,0 +1,231 @@
+.dashboard {
+  position: relative;
+  z-index: 1;
+  padding: 20px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.1);
+}
+
+/* ===== Filters Row ===== */
+.filter-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.filters {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between; /* NEW: separates left and right sections */
+  width: 100%;
+}
+
+/* Group left-side filters */
+.filter-left {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* Right-aligned search and button */
+.filter-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+
+.filters label {
+  font-weight: 500;
+  color: #333;
+}
+
+.filters select,
+.filters input {
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  min-width: 140px;
+}
+
+.filters input {
+  flex: 1;
+  min-width: 200px;
+}
+
+.filters .btn {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+.user-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.user-table th, .user-table td {
+  padding: 10px;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+.user-table th {
+  background-color: #f3f3f3;
+  font-weight: bold;
+}
+
+.user-table tr:hover {
+  background-color: #f9f9f9;
+}
+
+.btn {
+  padding: 5px 10px;
+  border-radius: 5px;
+  text-decoration: none;
+  color: white;
+}
+
+.btn-warning {
+  background-color: #ffc107;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+}
+
+.btn-danger:hover {
+  background-color: #c82333;
+}
+
+.btn-warning:hover {
+  background-color: #e0a800;
+}
+
+/* ===== Header Row ===== */
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.module-content {
+  position: static !important; /* remove local stacking context */
+}
+
+.modal-box {
+  background-color: #fff;
+  padding: 20px 25px;
+  border-radius: 10px;
+  width: 350px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  z-index: 10001; /* one layer above overlay */
+}
+
+.modal-box h4 {
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.modal-box form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.modal-box input,
+.modal-box select {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.btn-primary {
+  background-color: #007bff;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+}
+
+.btn-secondary:hover {
+  background-color: #5a6268;
+}
+
+/* === FINAL FIX: Force true dark transparent overlay === */
+.modal-overlay {
+  position: fixed !important;
+  inset: 0 !important; /* shorthand for top, right, bottom, left = 0 */
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(0, 0, 0, 0.6) !important;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 99999 !important; /* above all UI layers */
+  pointer-events: auto;
+}
+
+.modal-overlay.show {
+  display: flex !important;
+  animation: fadeIn 0.10s ease-in-out;
+}
+
+.modal-box {
+  position: relative;
+  background: #fff !important;
+  padding: 20px 25px;
+  border-radius: 10px;
+  width: 350px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  z-index: 100000 !important;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+
+.modal-overlay.show .modal-box {
+  transform: scale(1);
+}
+
+.modal-box h4 {
+  text-align: center;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.form-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.form-row label {
+  width: 100px;
+  text-align: right;
+  margin-right: 10px;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 15px;
+}
+

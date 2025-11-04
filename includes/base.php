@@ -14,6 +14,7 @@ if (!isset($_SESSION["otp_verified"]) || !$_SESSION["otp_verified"]) {
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="css/admin.css">
+  <link rel="stylesheet" href="css/users.css">
   <title><?= htmlspecialchars($title) ?></title>
 </head>
 <body>

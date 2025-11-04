@@ -1,4 +1,0 @@
-/vendor/
-/.env
-*.log
-db_connection.php

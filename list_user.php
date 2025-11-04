@@ -1,77 +1,98 @@
 <?php
 require_once "db_connection.php";
 
-// Handle delete request
-if (isset($_GET['delete'])) {
-    $user_id = intval($_GET['delete']);
-    $stmt = $conn->prepare("DELETE FROM Users WHERE user_id = ?");
-    $stmt->bind_param("i", $user_id);
-    $stmt->execute();
-    $stmt->close();
-    header("Location: list_user.php");
-    exit;
-}
+// Optional filters from GET parameters
+$roleFilter = $_GET['role'] ?? '';
+$branchFilter = $_GET['branch'] ?? '';
+$sortOrder = $_GET['sort'] ?? 'ASC';
+$search = $_GET['search'] ?? '';
 
-// fetch all users with branch names
-$sql = "SELECT u.user_id, u.username, u.password_hash, u.role, b.branch_name
+// Base query
+$sql = "SELECT u.user_id, u.username, u.role, b.branch_name
         FROM Users u
         LEFT JOIN Branches b ON u.branch_id = b.branch_id
-        ORDER BY u.user_id ASC";
-$result = $conn->query($sql);
+        WHERE 1=1";
+
+// Add filters dynamically
+if (!empty($roleFilter)) {
+    $sql .= " AND u.role = ?";
+}
+if (!empty($branchFilter)) {
+    $sql .= " AND b.branch_name = ?";
+}
+if (!empty($search)) {
+    $sql .= " AND (u.username LIKE ? OR b.branch_name LIKE ?)";
+}
+
+$sql .= " ORDER BY u.username $sortOrder";
+
+$stmt = $conn->prepare($sql);
+
+// Bind parameters dynamically
+$params = [];
+$types = '';
+
+if (!empty($roleFilter)) {
+    $types .= 's';
+    $params[] = $roleFilter;
+}
+if (!empty($branchFilter)) {
+    $types .= 's';
+    $params[] = $branchFilter;
+}
+if (!empty($search)) {
+    $types .= 'ss';
+    $params[] = "%$search%";
+    $params[] = "%$search%";
+}
+
+if (!empty($params)) {
+    $stmt->bind_param($types, ...$params);
+}
+
+$stmt->execute();
+$result = $stmt->get_result();
+
+// Output only table rows (no <html> structure)
+if ($result->num_rows > 0):
+    $counter = 1;
+    while ($row = $result->fetch_assoc()):
 ?>
-
-<!DOCTYPE html>
-<html>
-<head>
-    <title>User List</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 30px; }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        tr:hover { background-color: #f9f9f9; }
-        a { text-decoration: none; padding: 5px; border-radius: 3px; }
-        .edit { background: #ffc107; color: white; }
-        .delete { background: #dc3545; color: white; }
-    </style>
-</head>
-<body>
-
-<h2>User List</h2>
-
-<table>
-    <thead>
         <tr>
-            <th>ID</th>
-            <th>Username</th>
-            <th>Role</th>
-            <th>Branch</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-   <tbody>
-    <?php if ($result->num_rows > 0): ?>
-        <?php $counter = 1; ?>
-        <?php while ($row = $result->fetch_assoc()): ?>
-            <tr>
-                <td><?php echo $counter++; ?></td>
-                <td><?php echo htmlspecialchars($row['username']); ?></td>
-                <td><?php echo htmlspecialchars($row['role']); ?></td>
-                <td><?php echo htmlspecialchars($row['branch_name'] ?? 'N/A'); ?></td>
-                <td>
-                    <a class="edit" href="edit_user.php?id=<?php echo $row['user_id']; ?>">Edit</a>
-                    <a class="delete" href="list_users.php?delete=<?php echo $row['user_id']; ?>" onclick="return confirm('Are you sure?');">Delete</a>
-                </td>
-            </tr>
-        <?php endwhile; ?>
-    <?php else: ?>
-        <tr>
-            <td colspan="5">No users found.</td>
-        </tr>
-    <?php endif; ?>
-</tbody>
+            <td><?= $counter++ ?></td>
+            <td><?= htmlspecialchars($row['username']) ?></td>
+            <td><?= htmlspecialchars($row['role']) ?></td>
+            <td><?= htmlspecialchars($row['branch_name'] ?? 'N/A') ?></td>
+            <td>
+                <!-- 🟡 Edit button now opens modal dynamically -->
+                <button type="button" class="btn btn-warning btn-sm"
+                    onclick="openEditUserModal({
+                        id: '<?= $row['user_id'] ?>',
+                        username: '<?= htmlspecialchars($row['username']) ?>',
+                        phone: '<?= htmlspecialchars($row['phone'] ?? '') ?>',
+                        role: '<?= htmlspecialchars($row['role']) ?>',
+                        branch: '<?= htmlspecialchars($row['branch_name'] ?? '') ?>'
+                    })">
+                    Edit
+                </button>
 
-</table>
+                <!-- 🔴 Delete button unchanged -->
+                <button type="button" class="btn btn-danger btn-sm"
+                    onclick="deleteUser(<?= $row['user_id'] ?>)">
+                    Delete
+                </button>
+            </td>
+        </tr>
+<?php
+    endwhile;
+else:
+?>
+    <tr>
+        <td colspan="5">No users found.</td>
+    </tr>
+<?php
+endif;
 
-</body>
-</html>
+$stmt->close();
+$conn->close();
+?>
