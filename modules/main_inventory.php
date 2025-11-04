@@ -127,7 +127,7 @@
 
       <div class="modal-buttons">
         <button type="button" class="btn btn-primary" onclick="saveRestock()">Confirm</button>
-        <button type="button" class="btn btn-secondary" onclick="closeRestockModal()">Cancel</button>
+        <button type="button" class="btn btn-danger" onclick="closeRestockModal()">Cancel</button>
       </div>
     </form>
   </div>
