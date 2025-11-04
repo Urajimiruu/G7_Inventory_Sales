@@ -497,3 +497,40 @@ body {
   background-color: #fff;
   color: #333;
 }
+
+
+#saleModal .modal-box {
+  width: 380px; /* slightly wider to fit three inputs */
+  max-width: 90vw;
+}
+
+#saleModal .form-row {
+  flex-wrap: wrap; /* allows wrapping for long rows */
+}
+
+#saleModal .form-row label {
+  width: 80px; /* smaller label to save space */
+}
+
+#saleModal input[type="text"],
+#saleModal input[type="number"] {
+  flex: 1;
+  min-width: 60px;
+}
+
+/* specifically for the Item + Qty + Price row */
+#saleModal #saleItem {
+  flex: 1.4;
+}
+
+#saleModal #saleQty {
+  width: 70px;
+}
+
+#saleModal #salePrice {
+  width: 90px;
+}
+
+#saleModal .modal-buttons {
+  margin-top: 20px;
+}
