@@ -94,6 +94,10 @@
   color: white;
 }
 
+.btn-success {
+  color: black;
+}
+
 .btn-warning {
   background-color: #ffc107;
 }
