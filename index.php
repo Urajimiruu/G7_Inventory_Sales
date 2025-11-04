@@ -27,6 +27,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $otp = rand(100000, 999999);
         $_SESSION["otp_code"] = $otp;
         $_SESSION["otp_time"] = time();
+         // send via iprogtech
+        $apiToken = "8573678c1478276334450776eda448118427e2a1"; 
+        $url = "https://sms.iprogtech.com/api/v1/otp/send_otp";
 
         // format phone number
         $phone = $user["phone_number"];
@@ -35,16 +38,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $phone = '+63' . substr($phone, 1);
         }
 
-        // send via iprogtech
-        $apiToken = "8573678c1478276334450776eda448118427e2a1"; 
-        $url = "https://sms.iprogtech.com/api/v1/otp/send_otp";
+       
 
-        $message = "Your OTP is $otp"; // ✅ replaced placeholder with actual number
+        $message = "Your OTP is $otp";
 
         $data = [
             "api_token" => $apiToken,
             "phone_number" => $phone,
-            "message" => "Your OTP is :otp"
+            "message" => "Your OTP code is :otp. It is valid for 5 minutes"
         ];
 
         $payload = json_encode($data);

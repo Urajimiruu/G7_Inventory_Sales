@@ -52,7 +52,7 @@ if ($httpCode == 200 && isset($resp["status"]) && $resp["status"] === "success")
     unset($_SESSION["temp_user"]);
 
   
-    echo "success:" . strtolower($_SESSION["role"]);
+    echo "success:";
     exit;
 } else {
     if (isset($resp["message"])) {

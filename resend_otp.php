@@ -23,7 +23,7 @@ session_start();
         $data = [
             "api_token" => $apiToken,
             "phone_number" => $phone,
-            "message" => "Your OTP is :otp"
+            "message" => "Your OTP code is :otp. It is valid for 5 minutes"
         ];
 
         $payload = json_encode($data);
@@ -46,10 +46,10 @@ session_start();
                 (isset($resp["message"]) && stripos($resp["message"], "OTP sent") !== false)
             )
         ) {
-            echo "✅ OTP resent successfully! (" . $otp . ")";
+            echo "OTP resent successfully!";
         } else {
             $msg = isset($resp["message"]) ? $resp["message"] : "Unknown error or invalid API response.";
-            echo "❌ Failed to resend OTP: " . htmlspecialchars($msg) . " | HTTP: $httpCode | Response: " . htmlspecialchars($response);
+            echo "Failed to resend OTP: " . htmlspecialchars($msg) . " | HTTP: $httpCode | Response: " . htmlspecialchars($response);
         }
 
 ?>
