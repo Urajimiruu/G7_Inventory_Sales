@@ -35,7 +35,7 @@ $branches = $conn->query("SELECT branch_name FROM Branches ORDER BY branch_name 
         <button type="button" class="btn btn-primary" onclick="openAddUserModal()">+ Add User</button>
       </div>
     </div>
-  </form>
+  </form>asfas
 
   <!-- 📋 Table -->
   <div class="table-container">

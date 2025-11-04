@@ -328,3 +328,172 @@ body {
     table.vertical thead th, table.vertical tbody td { padding:10px 12px; }
     .table-wrap { padding:12px; border-radius:10px; }
   }
+
+
+
+
+  /* Modal */
+
+
+  .modal-box {
+  background-color: #fff;
+  padding: 20px 25px;
+  border-radius: 10px;
+  width: 350px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  z-index: 10001; /* one layer above overlay */
+}
+
+.modal-box h4 {
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.modal-box form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.modal-box input,
+.modal-box select {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.btn-primary {
+  background-color: #007bff;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+}
+
+.btn-secondary:hover {
+  background-color: #5a6268;
+}
+
+/* === FINAL FIX: Force true dark transparent overlay === */
+.modal-overlay {
+  position: fixed !important;
+  inset: 0 !important; /* shorthand for top, right, bottom, left = 0 */
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(0, 0, 0, 0.6) !important;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 99999 !important; /* above all UI layers */
+  pointer-events: auto;
+}
+
+.modal-overlay.show {
+  display: flex !important;
+  animation: fadeIn 0.10s ease-in-out;
+}
+
+.modal-box {
+  position: relative;
+  background: #fff !important;
+  padding: 20px 25px;
+  border-radius: 10px;
+  width: 350px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  z-index: 100000 !important;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+
+.modal-overlay.show .modal-box {
+  transform: scale(1);
+}
+
+.modal-box h4 {
+  text-align: center;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.form-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.form-row label {
+  width: 100px;
+  text-align: right;
+  margin-right: 10px;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.topbar.disabled {
+  background-color: transparent;
+  border-bottom: none;
+  pointer-events: none;
+  filter: blur(2px);
+  opacity: 0.7;
+}
+
+
+/* Stocks */
+.status {
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  gap: 6px;
+}
+
+.status .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* Colors */
+.status.on-stock .dot {
+  background-color: #28a745; /* green */
+}
+
+.status.low-stock .dot {
+  background-color: #ffc107; /* yellow */
+}
+
+.status.no-stock .dot {
+  background-color: #dc3545; /* red */
+}
+
+
+/* Dates */
+
+.filters select,
+.filters input,
+.filters input[type="date"] {
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  min-width: 140px;
+}
+
+.filters input[type="date"] {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: #fff;
+  color: #333;
+}

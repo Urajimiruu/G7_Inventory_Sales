@@ -5,7 +5,7 @@
     <div class="filters">
       <div class="filter-left">
         <label>Filter:</label>
-        <select name="role" onchange="loadTable()">
+        <select name="role">
           <option value="">Product</option>
           <option value="Admin">Admin</option>
           <option value="Owner">Owner</option>
@@ -13,7 +13,7 @@
         </select>
 
         <label>| Sort:</label>
-        <select name="branch" onchange="loadTable()">
+        <select name="branch">
           <option value="">Lowest</option>
           <option value="Manila">Manila</option>
           <option value="Cebu">Cebu</option>
@@ -23,7 +23,7 @@
 
       <div class="filter-right">
         <label>Search:</label>
-        <input type="text" name="search" placeholder="Search user or branch..." onkeyup="loadTable()">
+        <input type="text" name="search" placeholder="Search user or branch...">
       </div>
     </div>
   </form>
@@ -49,7 +49,7 @@
             <td class="right">$20.00</td>
             <td class="right">$24.99</td>
             <td class="right">4</td>
-            <td><button type="button" class="btn btn-primary">Restock</button></td>
+            <td><button type="button" class="btn btn-primary" onclick="openRestockModal({ name: 'Wireless Mouse', quantity: 4 })">Restock</button></td>
           </tr>
           <tr>
             <td>Mechanical Keyboard</td>
@@ -57,7 +57,7 @@
             <td class="right">$70.00</td>
             <td class="right">$89.00</td>
             <td class="right">5</td>
-            <td><button type="button" class="btn btn-primary">Restock</button></td>
+            <td><button type="button" class="btn btn-primary" onclick="openRestockModal({ name: 'Wireless Mouse', quantity: 4 })">Restock</button></td>
           </tr>
           <tr>
             <td>USB-C Hub</td>
@@ -65,92 +65,68 @@
             <td class="right">$30.00</td>
             <td class="right">$39.50</td>
             <td class="right">2</td>
-            <td><button type="button" class="btn btn-primary">Restock</button></td>
+            <td><button type="button" class="btn btn-primary" onclick="openRestockModal({ name: 'Wireless Mouse', quantity: 4 })">Restock</button></td>
           </tr>
         </tbody>
       </table>
     </div>
   
-
-
-<!-- 🧩 User Modal (Add/Edit) -->
-<div id="userModal" class="modal-overlay">
+<!-- 🧩 Restock Modal -->
+<div id="restockModal" class="modal-overlay">
   <div class="modal-box">
-    <h4 id="modalTitle">ADD USER / EDIT USER</h4>
+    <h4 id="restockModalTitle">RESTOCK PRODUCT</h4>
 
-    <form id="userForm" method="POST">
+    <form id="restockForm">
+
       <div class="form-row">
-        <label>Username:</label>
-        <input type="text" name="username" id="username" required>
+        <label>Item ID:</label>
+        <input type="text" id="itemid" name="itemid" readonly>
       </div>
 
       <div class="form-row">
-        <label>Password:</label>
-        <input type="password" name="password" id="password" required>
+        <label>Name:</label>
+        <input type="text" id="restockProduct" name="product" readonly>
       </div>
 
       <div class="form-row">
-        <label>Phone No.:</label>
-        <input type="text" name="phone" id="phone">
+        <label>Stock:</label>
+        <input type="text" id="restockCurrentQty" name="current_qty" readonly>
       </div>
 
-      <div class="form-row">
-        <label>Role:</label>
-        <select name="role" id="role" required>
-          <option value="">Select Role</option>
-          <option value="Admin">Admin</option>
-          <option value="Owner">Owner</option>
-          <option value="Renter">Renter</option>
-        </select>
-      </div>
-
-      <div class="form-row">
-        <label>Branch:</label>
-        <select name="branch" id="branch" required>
-          <option value="">Select Branch</option>
-          <option value="Manila">Manila</option>
-          <option value="Cebu">Cebu</option>
-          <option value="Davao">Davao</option>
-        </select>
-      </div>
-
-      <div class="modal-buttons"> 
-        <button type="button" class="btn btn-success" id="saveBtn" onclick="saveUser()">Save</button>
-        <button type="button" class="btn btn-danger" onclick="closeUserModal()">Cancel</button>
+      <div class="modal-buttons">
+        <button type="button" class="btn btn-primary" onclick="saveRestock()">Confirm</button>
+        <button type="button" class="btn btn-secondary" onclick="closeRestockModal()">Cancel</button>
       </div>
     </form>
   </div>
 </div>
 
-
 <script>
-let currentUserId = null;
+let currentProduct = null;
+let currentItemId = null;
 
-// 🔹 Open modal for adding a user
-function openAddUserModal() {
-  currentUserId = null;
-  document.getElementById('modalTitle').textContent = "ADD USER";
-  document.getElementById('userForm').reset();
-  document.getElementById('userModal').classList.add('show');
+// 🔹 Open modal and fill with product data
+function openRestockModal(itemId, productName, currentQty) {
+  currentItemId = itemId;
+  currentProduct = productName;
+
+  document.getElementById('itemid').value = itemId;
+  document.getElementById('restockProduct').value = productName;
+  document.getElementById('restockCurrentQty').value = currentQty;
+
+  document.getElementById('restockModal').classList.add('show');
+  document.querySelector('.topbar').classList.add('disabled');
 }
-
-// 🔹 Open modal for editing an existing user
-function openEditUserModal(user) {
-  currentUserId = user.id;
-  document.getElementById('modalTitle').textContent = "EDIT USER";
-
-  document.getElementById('username').value = user.username;
-  document.getElementById('password').value = '';
-  document.getElementById('role').value = user.role;
-  document.getElementById('branch').value = user.branch;
-
-  document.getElementById('userModal').classList.add('show');
-}
-
-
 
 // 🔹 Close modal
-function closeUserModal() {
-  document.getElementById('userModal').classList.remove('show');
+function closeRestockModal() {
+  document.getElementById('restockModal').classList.remove('show');
+  document.querySelector('.topbar').classList.remove('disabled');
+}
+
+// 🔹 Example save function (frontend only)
+function saveRestock() {
+  alert(`✅ Restocked item ID ${currentItemId} (${currentProduct}) successfully!`);
+  closeRestockModal();
 }
 </script>

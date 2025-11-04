@@ -23,6 +23,7 @@ $customTitles = [
   "maintenance_products" => "Product Management",
   "maintenance_branches" => "Branch Management",
   "maintenance_users" => "User Management",
+  "returns" => "Returns",
 ];
 if (isset($customTitles[$page])) {
   $title = $customTitles[$page];
@@ -41,6 +42,7 @@ $descriptions = [
   "maintenance_products" => "Manage the products available in the inventory.",
   "maintenance_branches" => "Manage branch details and settings.",
   "maintenance_users" => "Manage user accounts and permissions.",
+  "returns" => "Handle product returns and manage return records.",
 ];
 
 $description = $descriptions[$page] ?? "";
