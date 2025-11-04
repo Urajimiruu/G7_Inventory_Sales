@@ -39,41 +39,80 @@
 
     <div class="table-scroll" role="region" aria-label="Products table">
       <table class="vertical" aria-describedby="caption-vertical">
-        <thead>
-          <tr>
-            <th scope="col">Product</th>
-            <th scope="col">Unit</th>
-            <th scope="col" class="right">Cost Price</th>
-            <th scope="col" class="right">Selling Price</th>
-            <th scope="col" class="right">Quantity</th>
-            <th scope="col">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Wireless Mouse</td>
-            <td class="muted">Peripherals</td>
-            <td class="right">$20.00</td>
-            <td class="right">$24.99</td>
-            <td class="right">4</td>
-            <td><span class="status on-stock"><span class="dot"></span>On Stock</span></td>
-          </tr>
-          <tr>
-            <td>Mechanical Keyboard</td>
-            <td class="muted">Peripherals</td>
-            <td class="right">$70.00</td>
-            <td class="right">$89.00</td>
-            <td class="right">5</td>
-            <td><span class="status low-stock"><span class="dot"></span>Low Stock</span></td>
-          </tr>
-          <tr>
-            <td>USB-C Hub</td>
-            <td class="muted">Accessories</td>
-            <td class="right">$30.00</td>
-            <td class="right">$39.50</td>
-            <td class="right">2</td>
-            <td><span class="status no-stock"><span class="dot"></span>No Stock</span></td>
-          </tr>
-        </tbody>
+       <thead>
+      <tr>
+        <th scope="col">Branch</th>
+        <th scope="col">Product</th>
+        <th scope="col">Unit</th>
+        <th scope="col" class="right">Cost Price</th>
+        <th scope="col" class="right">Selling Price</th>
+        <th scope="col" class="right">Quantity</th>
+        <th scope="col">Status</th>
+      </tr>
+    </thead>
+
+       <tbody>
+<?php
+require_once "db_connection.php"; // if this file is in /modules; use "db_connection.php" if it's in root
+
+$sql = "
+SELECT 
+    bi.branch_id,
+    bi.product_id,
+    bi.quantity,
+    p.product_name,
+    p.unit,
+    p.cost_price,
+    p.selling_price,
+    b.branch_name
+FROM branchinventory bi
+JOIN products  p ON bi.product_id = p.product_id
+JOIN branches  b ON bi.branch_id = b.branch_id
+ORDER BY b.branch_name, p.product_name
+";
+
+$result = $conn->query($sql);
+
+if ($result && $result->num_rows > 0) {
+  while ($row = $result->fetch_assoc()) {
+    $branchName = htmlspecialchars($row['branch_name'], ENT_QUOTES, 'UTF-8');
+    $productName = htmlspecialchars($row['product_name'], ENT_QUOTES, 'UTF-8');
+    $unit = htmlspecialchars($row['unit'], ENT_QUOTES, 'UTF-8');
+    $costPrice = number_format((float)$row['cost_price'], 2);
+    $sellingPrice = number_format((float)$row['selling_price'], 2);
+    $qty = (int)$row['quantity'];
+
+    // 🔹 Status logic
+    if ($qty === 0) {
+      $statusText  = 'No Stock';
+      $statusClass = 'no-stock';   // red
+    } elseif ($qty < 20) {
+      $statusText  = 'Low Stock';
+      $statusClass = 'low-stock';  // yellow/orange
+    } else {
+      $statusText  = 'On Stock';
+      $statusClass = 'on-stock';   // green
+    }
+
+    echo "
+      <tr>
+        <td>{$branchName}</td>
+        <td>{$productName}</td>
+        <td class='muted'>{$unit}</td>
+        <td class='right'>₱{$costPrice}</td>
+        <td class='right'>₱{$sellingPrice}</td>
+        <td class='right'>{$qty}</td>
+        <td><span class='status {$statusClass}'><span class='dot'></span>{$statusText}</span></td>
+      </tr>
+    ";
+  }
+} else {
+  echo "<tr><td colspan='7' style='text-align:center;'>No branch inventory found</td></tr>";
+}
+
+$conn->close();
+?>
+</tbody>
+
       </table>
     </div>
