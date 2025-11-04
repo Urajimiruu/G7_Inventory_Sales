@@ -1,3 +1,16 @@
+<?php
+
+require_once "db_connection.php"; // adjust path if this file is not in /modules
+
+if (!isset($_SESSION['user_id'])) {
+    header("Location: index.php");
+    exit;
+}
+
+$role     = $_SESSION['role'] ?? '';
+$branchId = (int)($_SESSION['branch_id'] ?? 0);
+?>
+
 <div class="dashboard">
 
   <!-- 🔍 Filters -->
@@ -52,9 +65,9 @@
     </thead>
 
        <tbody>
+<tbody>
 <?php
-require_once "db_connection.php"; // if this file is in /modules; use "db_connection.php" if it's in root
-
+// base query
 $sql = "
 SELECT 
     bi.branch_id,
@@ -68,30 +81,45 @@ SELECT
 FROM branchinventory bi
 JOIN products  p ON bi.product_id = p.product_id
 JOIN branches  b ON bi.branch_id = b.branch_id
-ORDER BY b.branch_name, p.product_name
 ";
 
-$result = $conn->query($sql);
+// if role is "shop", restrict to their branch only
+// adjust 'shop' to match exactly what you store in the Users.role column (Shop / SH0P / etc.)
+if (strtolower($role) === 'shop' && $branchId > 0) {
+    $sql .= " WHERE bi.branch_id = ? ";
+}
+
+$sql .= " ORDER BY b.branch_name, p.product_name";
+
+if (strtolower($role) === 'shop' && $branchId > 0) {
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $branchId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+} else {
+    // admin / owner / whatever: show all branches
+    $result = $conn->query($sql);
+}
 
 if ($result && $result->num_rows > 0) {
   while ($row = $result->fetch_assoc()) {
-    $branchName = htmlspecialchars($row['branch_name'], ENT_QUOTES, 'UTF-8');
-    $productName = htmlspecialchars($row['product_name'], ENT_QUOTES, 'UTF-8');
-    $unit = htmlspecialchars($row['unit'], ENT_QUOTES, 'UTF-8');
-    $costPrice = number_format((float)$row['cost_price'], 2);
+    $branchName   = htmlspecialchars($row['branch_name'], ENT_QUOTES, 'UTF-8');
+    $productName  = htmlspecialchars($row['product_name'], ENT_QUOTES, 'UTF-8');
+    $unit         = htmlspecialchars($row['unit'], ENT_QUOTES, 'UTF-8');
+    $costPrice    = number_format((float)$row['cost_price'], 2);
     $sellingPrice = number_format((float)$row['selling_price'], 2);
-    $qty = (int)$row['quantity'];
+    $qty          = (int)$row['quantity'];
 
-    // 🔹 Status logic
+    // status logic
     if ($qty === 0) {
       $statusText  = 'No Stock';
-      $statusClass = 'no-stock';   // red
+      $statusClass = 'no-stock';
     } elseif ($qty < 20) {
       $statusText  = 'Low Stock';
-      $statusClass = 'low-stock';  // yellow/orange
+      $statusClass = 'low-stock';
     } else {
       $statusText  = 'On Stock';
-      $statusClass = 'on-stock';   // green
+      $statusClass = 'on-stock';
     }
 
     echo "
@@ -113,6 +141,7 @@ if ($result && $result->num_rows > 0) {
 $conn->close();
 ?>
 </tbody>
+
 
       </table>
     </div>
