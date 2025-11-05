@@ -22,7 +22,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $branch_id = null;
     }
 
-    // ✅ Validations
+    // Validations
     if (empty($username)) $errors[] = "Username is required.";
     if (empty($password)) $errors[] = "Password is required.";
     if (empty($role)) $errors[] = "Role is required.";
@@ -33,7 +33,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
     if ($role === "shop" && empty($branch_id)) $errors[] = "Branch is required for shop users.";
 
-    // ✅ Check duplicate username
+    // Check duplicate username
     if (empty($errors)) {
         $check = $conn->prepare("SELECT user_id FROM Users WHERE username = ?");
         $check->bind_param("s", $username);
@@ -43,7 +43,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $check->close();
     }
 
-    // ✅ Insert if no errors
+    // Insert if no errors
     if (empty($errors)) {
         $password_hash = password_hash($password, PASSWORD_BCRYPT);
 
@@ -58,7 +58,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
         if ($stmt->execute()) {
-            $success = "✅ User <strong>$username</strong> created successfully!";
+            $success = "User <strong>$username</strong> created successfully!";
             $username = $password = $role = $phone_number = "";
             $branch_id = null;
         } else {

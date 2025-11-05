@@ -1,6 +1,6 @@
 <div class="dashboard">
 
-  <!-- 🔍 Filters -->
+  <!-- Filters -->
   <form id="filterForm" class="filter-form">
     <div class="filters">
       <div class="filter-left">
@@ -30,7 +30,7 @@
     </div> 
   </form>
 
-  <!-- 📋 Table -->
+  <!-- Table -->
   <div class="table-scroll" role="region" aria-label="Products table">
     <table class="vertical" aria-describedby="caption-vertical">
       <thead>

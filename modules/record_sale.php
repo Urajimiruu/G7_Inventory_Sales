@@ -52,7 +52,7 @@ try {
 
         if ($pid <= 0 || $qty <= 0) continue;
 
-        // 1️⃣ Get old quantity (lock row)
+        // Get old quantity (lock row)
         $qtySql = "SELECT quantity FROM branchinventory WHERE branch_id = ? AND product_id = ? FOR UPDATE";
         $qtyStmt = $conn->prepare($qtySql);
         $qtyStmt->bind_param("ii", $branchId, $pid);
@@ -63,18 +63,18 @@ try {
 
         $oldQty = (int)$oldQty;
 
-        // 2️⃣ Update inventory
+        // Update inventory
         $invStmt->bind_param("iiii", $qty, $branchId, $pid, $qty);
         $invStmt->execute();
         if ($invStmt->affected_rows === 0) {
             throw new Exception("Not enough stock for product ID $pid.");
         }
 
-        // 3️⃣ Insert sale
+        // Insert sale
         $insertStmt->bind_param("iisi", $branchId, $pid, $saleDate, $qty);
         $insertStmt->execute();
 
-        // 4️⃣ Record for notification (don’t send email yet)
+        // Record for notification (don’t send email yet)
         $notifications[] = [
             'branchId' => $branchId,
             'productId' => $pid,
@@ -84,13 +84,12 @@ try {
 
     $conn->commit();
 
-    // 📨 Now safely send notifications after successful commit
+    // safely send notifications after successful commit
     foreach ($notifications as $n) {
         try {
             checkLowStockAndNotify($conn, $n['branchId'], $n['productId'], $n['oldQty'], 20);
         } catch (Exception $mailEx) {
             error_log("Email send failed for product {$n['productId']}: " . $mailEx->getMessage());
-            // Don't break flow
         }
     }
 

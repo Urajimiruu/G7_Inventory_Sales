@@ -53,7 +53,7 @@ if (!empty($params)) {
 $stmt->execute();
 $result = $stmt->get_result();
 
-// Output only table rows (no <html> structure)
+
 if ($result->num_rows > 0):
     $counter = 1;
     while ($row = $result->fetch_assoc()):
@@ -64,7 +64,7 @@ if ($result->num_rows > 0):
             <td><?= htmlspecialchars($row['role']) ?></td>
             <td><?= htmlspecialchars($row['branch_name'] ?? 'N/A') ?></td>
             <td>
-                <!-- 🟡 Edit button now opens modal dynamically -->
+                <!-- Edit button -->
                 <button type="button" class="btn btn-warning btn-sm"
                     onclick="openEditUserModal({
                         id: '<?= $row['user_id'] ?>',
@@ -76,7 +76,7 @@ if ($result->num_rows > 0):
                     Edit
                 </button>
 
-                <!-- 🔴 Delete button unchanged -->
+                <!-- Delete button -->
                 <button type="button" class="btn btn-danger btn-sm"
                     onclick="deleteUser(<?= $row['user_id'] ?>)">
                     Delete

@@ -8,7 +8,7 @@ $branches = $conn->query("SELECT branch_name FROM Branches ORDER BY branch_name 
 
 <div class="dashboard">
 
-  <!-- 🔍 Filters -->
+  <!-- Filters -->
   <form id="filterForm" class="filter-form">
     <div class="filters">
       <div class="filter-left">
@@ -37,7 +37,7 @@ $branches = $conn->query("SELECT branch_name FROM Branches ORDER BY branch_name 
     </div>
   </form>
 
-  <!-- 📋 Table -->
+  <!-- Table -->
   <div class="table-container">
     <table class="user-table">
       <thead>
@@ -56,8 +56,8 @@ $branches = $conn->query("SELECT branch_name FROM Branches ORDER BY branch_name 
   </div>
 </div>
 
-<!-- 🧩 Add User Modal (hidden by default) -->
-<!-- 🧩 User Modal (Add/Edit) -->
+<!-- Add User Modal (hidden by default) -->
+<!-- User Modal (Add/Edit) -->
 <div id="userModal" class="modal-overlay">
   <div class="modal-box">
     <h4 id="modalTitle">ADD USER / EDIT USER</h4>
@@ -113,7 +113,7 @@ $branches = $conn->query("SELECT branch_name FROM Branches ORDER BY branch_name 
 <script>
 let currentUserId = null;
 
-// 🔹 Open modal for adding a user
+// Open modal for adding a user
 function openAddUserModal() {
   currentUserId = null;
   document.getElementById('modalTitle').textContent = "ADD USER";
@@ -122,7 +122,7 @@ function openAddUserModal() {
   document.getElementById('userModal').classList.add('show');
 }
 
-// 🔹 Open modal for editing an existing user
+// Open modal for editing an existing user
 function openEditUserModal(user) {
   currentUserId = user.id;
   document.getElementById('modalTitle').textContent = "EDIT USER";
@@ -138,7 +138,7 @@ function openEditUserModal(user) {
   document.getElementById('userModal').classList.add('show');
 }
 
-// 🔹 Close modal
+// Close modal
 function closeUserModal() {
   document.getElementById('userModal').classList.remove('show');
 }

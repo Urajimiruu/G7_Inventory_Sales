@@ -9,7 +9,7 @@ if (!isset($_SESSION['user_id'])) {
 $role     = strtolower($_SESSION['role'] ?? '');
 $branchId = (int)($_SESSION['branch_id'] ?? 0);
 
-// 🔹 Load branches for dropdown (admin sees all, shop sees only their branch)
+// Load branches for dropdown (admin sees all, shop sees only their branch)
 if ($role === 'shop' && $branchId > 0) {
   $branchSql = "SELECT branch_id, branch_name FROM branches WHERE branch_id = ?";
   $stmt = $conn->prepare($branchSql);
@@ -20,7 +20,7 @@ if ($role === 'shop' && $branchId > 0) {
   $branchesRes = $conn->query("SELECT branch_id, branch_name FROM branches ORDER BY branch_name ASC");
 }
 
-// 🔹 Load products with selling price
+// Load products with selling price
 $productSql = "
   SELECT product_id, product_name, selling_price
   FROM products
@@ -32,7 +32,7 @@ while ($row = $productRes->fetch_assoc()) {
   $products[] = $row;
 }
 
-// 🔹 Load existing sales list for table
+// Load existing sales list for table
 //   One row = one product sold
 $salesWhere = "";
 $params = [];
@@ -71,7 +71,7 @@ if ($salesWhere) {
 ?>
 <div class="dashboard">
 
-  <!-- 🔍 Filters / header -->
+  <!-- Filters / header -->
   <form id="filterForm" class="filter-form">
     <div class="filters">
       <div class="filter-left">
@@ -100,7 +100,7 @@ if ($salesWhere) {
     </div>
   </form>
 
-  <!-- 📋 Sales table -->
+  <!-- Sales table -->
   <div class="table-scroll" role="region" aria-label="Sales table">
     <table class="vertical" aria-describedby="caption-vertical">
       <thead>
@@ -146,7 +146,7 @@ while ($b = $branchesRes->fetch_assoc()) {
 }
 ?>
 
-<!-- 🧾 Record Sale Modal (multi-item POS) -->
+<!-- Record Sale Modal (multi-item POS) -->
 <div id="saleModal" class="modal-overlay">
   <div class="modal-box">
     <h4 id="saleModalTitle">RECORD SALE</h4>
@@ -206,7 +206,7 @@ while ($b = $branchesRes->fetch_assoc()) {
   </div>
 </div>
 
-</div> <!-- end .dashboard -->
+</div>
 
 <script>
 // ---------- JS DATA FROM PHP ----------
@@ -348,13 +348,13 @@ function saveSale() {
     : branchSelect.value;
 
   if (!saleDate || !branchId) {
-    alert("⚠️ Please select date and branch.");
+    alert("Please select date and branch.");
     return;
   }
 
   const rows = document.querySelectorAll('#saleItemsBody tr');
   if (!rows.length) {
-    alert("⚠️ Please add at least one item.");
+    alert("Please add at least one item.");
     return;
   }
 
@@ -375,7 +375,7 @@ function saveSale() {
   });
 
   if (!formData.getAll('product_id[]').length) {
-    alert("⚠️ Please select products and quantities.");
+    alert("Please select products and quantities.");
     return;
   }
 
@@ -391,16 +391,16 @@ function saveSale() {
       catch (e) { throw new Error("Not valid JSON: " + text); }
 
       if (data.success) {
-        alert("✅ Sale recorded successfully!");
+        alert("Sale recorded successfully!");
         closeSaleModal();
         location.reload();
       } else {
-        alert("❌ Error: " + (data.message || "Failed to record sale."));
+        alert("Error: " + (data.message || "Failed to record sale."));
       }
     })
     .catch(err => {
       console.error("Record sale error:", err);
-      alert("❌ Error recording sale. Check console for details.");
+      alert("Error recording sale. Check console for details.");
     });
 }
 </script>

@@ -6,10 +6,10 @@ ini_set('display_errors', 1);
 // Return JSON responses
 header('Content-Type: application/json');
 
-// 🧩 Connect to database (go up one folder to find db_connection.php)
+// Connect to database
 require_once "../db_connection.php";
 
-// ✅ Validate POST parameters
+// Validate POST parameters
 if (!isset($_POST['itemid'], $_POST['add_qty'])) {
     echo json_encode(['success' => false, 'message' => 'Missing parameters.']);
     exit;
@@ -23,8 +23,7 @@ if ($itemId <= 0 || $addQty <= 0) {
     exit;
 }
 
-// ✅ Make sure your table and columns exist
-// If your table is actually named main_inventory (with underscore), adjust it here
+// Make sure your table and columns exist
 $sql = "UPDATE maininventory 
         SET quantity = quantity + ? 
         WHERE product_id = ?";
@@ -39,7 +38,7 @@ if (!$stmt) {
 // Bind parameters: first ? = addQty, second ? = productId
 $stmt->bind_param("ii", $addQty, $itemId);
 
-// ✅ Execute update query
+// Execute update query
 if ($stmt->execute()) {
     echo json_encode(['success' => true]);
 } else {

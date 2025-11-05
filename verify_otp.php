@@ -77,7 +77,7 @@ if (!isset($_POST['otp']) || empty($_POST['otp'])) {
     exit("No OTP provided.");
 }
 
-// ✅ Mock OTP verification (for testing)
+// Mock OTP verification (for testing)
 // You can change the mock OTP here:
 $mockOtp = "123456";
 
@@ -92,10 +92,10 @@ if ($enteredOtp === $mockOtp) {
     $_SESSION["branch_id"] = $user["branch_id"];
     unset($_SESSION["temp_user"]);
 
-    echo "✅ OTP Verified Successfully";
+    echo "OTP Verified Successfully";
     exit;
 } else {
-    echo "❌ Invalid OTP. Try again.";
+    echo "Invalid OTP. Try again.";
     exit;
 }
 

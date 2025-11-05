@@ -29,7 +29,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $branch_id    = ($role === "shop") ? $_POST["branch_id"] : null;
     $phone_number = trim($_POST["phone_number"]);
 
-    // ✅ Validation
+    // Validation
     if (empty($username)) {
         $errors[] = "Username is required.";
     }
@@ -63,7 +63,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
         if ($stmt->execute()) {
-            $success = "✅ User updated successfully!";
+            $success = "User updated successfully!";
             // Refresh displayed data
             $stmt->close();
             $stmt = $conn->prepare("SELECT * FROM Users WHERE user_id = ?");

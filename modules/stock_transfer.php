@@ -34,7 +34,7 @@ $transfersRes = $conn->query("
 
 <div class="dashboard">
 
-  <!-- 🔍 Filters (UI only for now) -->
+  <!-- Filters (UI only for now) -->
   <form id="filterForm" class="filter-form">
     <div class="filters">
       <div class="filter-left">
@@ -80,7 +80,7 @@ $transfersRes = $conn->query("
     </div>
   </form>
 
-  <!-- 📋 Recent transfers -->
+  <!-- Recent transfers -->
   <div class="table-scroll" role="region" aria-label="Products table">
     <table class="vertical" aria-describedby="caption-vertical">
       <thead>
@@ -110,7 +110,7 @@ $transfersRes = $conn->query("
     </table>
   </div>
 
-  <!-- 🧩 Transfer Modal -->
+  <!-- Transfer Modal -->
   <div id="transferModal" class="modal-overlay">
     <div class="modal-box">
       <h4 id="transferModalTitle">TRANSFER STOCK</h4>
@@ -167,7 +167,7 @@ $transfersRes = $conn->query("
 </div>
 
 <script>
-// open modal (no itemid, we choose product from dropdown)
+// open modal
 function openTransferModal() {
   const today = new Date().toISOString().split('T')[0];
   document.getElementById('transferDate').value = today;
@@ -223,7 +223,7 @@ function saveTransfer() {
   const qty    = parseInt(document.getElementById('transferQty').value, 10);
 
   if (!date || !prodId || !branch || isNaN(qty) || qty < 1) {
-    alert('⚠️ Please fill out all fields with valid values.');
+    alert('Please fill out all fields with valid values.');
     return;
   }
 
@@ -245,15 +245,15 @@ function saveTransfer() {
       catch (e) { throw new Error('Not valid JSON: ' + text); }
 
       if (data.success) {
-        alert('✅ Stock transferred successfully!');
+        alert('Stock transferred successfully!');
         location.reload();
       } else {
-        alert('❌ Transfer failed: ' + (data.message || 'Unknown error'));
+        alert('Transfer failed: ' + (data.message || 'Unknown error'));
       }
     })
     .catch(err => {
       console.error('Transfer error:', err);
-      alert('❌ Transfer failed. Check console for details.');
+      alert('Transfer failed. Check console for details.');
     });
 }
 </script>

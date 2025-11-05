@@ -67,7 +67,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         //     ) {
         //         $_SESSION["otp_sent"] = true;
         //         // echo "<pre>";
-        //         // echo "✅ OTP Sent Successfully\n";
+        //         // echo "OTP Sent Successfully\n";
         //         // echo "Phone: " . $phone . "\n";
         //         // echo "Message: " . $message . "\n";
         //         // echo "Response: " . htmlspecialchars(json_encode($resp, JSON_PRETTY_PRINT)) . "\n";
@@ -77,19 +77,19 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         //         $error = "OTP may have been sent, but API returned: " . htmlspecialchars(json_encode($resp));
         //     }
         // } else {
-        //     $error = "❌ Failed to send OTP. HTTP Code: " . $httpCode . " | Response: " . htmlspecialchars($response);
+        //     $error = "Failed to send OTP. HTTP Code: " . $httpCode . " | Response: " . htmlspecialchars($response);
         // }
 
          // SKIP OTP VERIFICATION FOR TESTING
          $_SESSION["temp_user"] = $user;
         $_SESSION["otp_verified"] = false;
 
-        // ✅ Generate mock OTP
+        // Generate mock OTP
         $otp = "123456"; 
         $_SESSION["otp_code"] = $otp;
         $_SESSION["otp_time"] = time();
 
-        // ✅ Mock sending OTP (no API call)
+        // Mock sending OTP (no API call)
         $_SESSION["otp_sent"] = true;
 
     } else {
