@@ -43,7 +43,11 @@ $branchId = (int)($_SESSION['branch_id'] ?? 0);
       </div>
 
       <div class="filter-right">
-        <button type="button" class="btn btn-primary" onclick="window.location.href='admin.php?page=returns'">Returns</button>
+      <?php
+      $pagePrefix = ($_SESSION['role'] === 'admin') ? 'admin.php' : 'shop.php';
+      ?>
+      <button type="button" class="btn btn-primary" onclick="window.location.href='<?php echo $pagePrefix; ?>?page=returns'">Returns</button>
+
       </div>
     </div>
   </form>

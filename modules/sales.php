@@ -83,18 +83,22 @@ if ($salesWhere) {
           <option value="Renter">Renter</option>
         </select>
 
-        <label>| Sort:</label>
-        <select name="branch">
-          <option value="">Lowest</option>
-          <option value="Manila">Manila</option>
-          <option value="Cebu">Cebu</option>
-          <option value="Davao">Davao</option>
+        <label>Filter:</label>
+        <select name="role">
+          <option value="">Product</option>
+          <option value="Admin">Admin</option>
+          <option value="Owner">Owner</option>
+          <option value="Renter">Renter</option>
         </select>
+
+        <label>| From:</label>
+        <input type="date" id="from-date" name="from_date">
+
+        <label>To:</label>
+        <input type="date" id="to-date" name="to_date">
       </div>
 
-      <div class="filter-right">
-        <label>Search:</label>
-        <input type="text" name="search" placeholder="Search product or branch...">
+      <div class="filter-far-right">
         <button type="button" class="btn btn-primary" onclick="openSaleModal()">+ Record Sale</button>
       </div>
     </div>
