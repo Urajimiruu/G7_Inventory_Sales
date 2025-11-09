@@ -73,36 +73,37 @@ if ($salesWhere) {
 
   <!-- Filters / header -->
   <form id="filterForm" class="filter-form">
-    <div class="filters">
-      <div class="filter-left">
-        <label>Filter:</label>
-        <select name="role">
-          <option value="">Product</option>
-          <option value="Admin">Admin</option>
-          <option value="Owner">Owner</option>
-          <option value="Renter">Renter</option>
-        </select>
+  <div class="filters">
+    <div class="filter-left">
+      <label>Filter:</label>
+      <select name="role" class="small-select">
+        <option value="">Product</option>
+        <option value="Admin">Admin</option>
+        <option value="Owner">Owner</option>
+        <option value="Renter">Renter</option>
+      </select>
 
-        <label>Filter:</label>
-        <select name="role">
-          <option value="">Product</option>
-          <option value="Admin">Admin</option>
-          <option value="Owner">Owner</option>
-          <option value="Renter">Renter</option>
-        </select>
+      <label>Filter:</label>
+      <select name="role" class="small-select">
+        <option value="">Product</option>
+        <option value="Admin">Admin</option>
+        <option value="Owner">Owner</option>
+        <option value="Renter">Renter</option>
+      </select>
 
-        <label>| From:</label>
-        <input type="date" id="from-date" name="from_date">
+      <label>| From:</label>
+        <input type="date" id="from-date" name="from_date" class="small-date">
 
-        <label>To:</label>
-        <input type="date" id="to-date" name="to_date">
-      </div>
-
-      <div class="filter-far-right">
-        <button type="button" class="btn btn-primary" onclick="openSaleModal()">+ Record Sale</button>
-      </div>
+      <label>To:</label>
+        <input type="date" id="to-date" name="to_date" class="small-date">
     </div>
-  </form>
+
+    <div class="filter-far-right">
+      <button type="button" class="btn btn-primary" onclick="openSaleModal()">Record Sale</button>
+    </div>
+  </div>
+</form>
+
 
   <!-- Sales table -->
   <div class="table-scroll" role="region" aria-label="Sales table">

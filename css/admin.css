@@ -535,12 +535,10 @@ body {
   margin-top: 20px;
 }
 
+.small-select {
+  min-width: 130px !important;
+}
 
-
-
-.filter-far-right {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-left: 40%;
+.small-date {
+  min-width: 130px !important;
 }

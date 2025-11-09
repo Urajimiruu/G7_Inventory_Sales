@@ -1,7 +1,7 @@
 <?php
 require_once "db_connection.php";
 
-// Get data for filter dropdowns
+// Get dropdown data
 $roles = $conn->query("SELECT DISTINCT role FROM Users");
 $branches = $conn->query("SELECT branch_name FROM Branches ORDER BY branch_name ASC");
 ?>
@@ -37,16 +37,16 @@ $branches = $conn->query("SELECT branch_name FROM Branches ORDER BY branch_name 
     </div>
   </form>
 
-  <!-- Table -->
-  <div class="table-container">
-    <table class="user-table">
+  <!-- User Table -->
+  <div class="table-scroll" role="region" aria-label="User Table">
+    <table class="vertical" aria-describedby="caption-vertical">
       <thead>
         <tr>
-          <th>#</th>
-          <th>Username</th>
-          <th>Role</th>
-          <th>Branch</th>
-          <th>Actions</th>
+          <th scope="col">#</th>
+          <th scope="col">Username</th>
+          <th scope="col">Role</th>
+          <th scope="col">Branch</th>
+          <th scope="col" class="right">Actions</th>
         </tr>
       </thead>
       <tbody id="userTableBody">
@@ -56,11 +56,10 @@ $branches = $conn->query("SELECT branch_name FROM Branches ORDER BY branch_name 
   </div>
 </div>
 
-<!-- Add User Modal (hidden by default) -->
-<!-- User Modal (Add/Edit) -->
+<!-- Add/Edit User Modal -->
 <div id="userModal" class="modal-overlay">
   <div class="modal-box">
-    <h4 id="modalTitle">ADD USER / EDIT USER</h4>
+    <h4 id="modalTitle">ADD USER</h4>
 
     <form id="userForm" method="POST">
       <div class="form-row">
@@ -102,43 +101,53 @@ $branches = $conn->query("SELECT branch_name FROM Branches ORDER BY branch_name 
       </div>
 
       <div class="modal-buttons">
-        <button type="submit" class="btn btn-success" id="saveBtn">Save</button>
+        <button type="submit" class="btn btn-primary" id="saveBtn">Save</button>
         <button type="button" class="btn btn-danger" onclick="closeUserModal()">Cancel</button>
       </div>
     </form>
   </div>
 </div>
 
-
 <script>
 let currentUserId = null;
 
-// Open modal for adding a user
+// --- Open modal for adding a user ---
 function openAddUserModal() {
   currentUserId = null;
   document.getElementById('modalTitle').textContent = "ADD USER";
   document.getElementById('userForm').reset();
-  document.getElementById('userForm').action = "add_user.php";
   document.getElementById('userModal').classList.add('show');
+
+  // Hide topbar background and border
+  const topbar = document.querySelector('.topbar');
+  if (topbar) {
+    topbar.style.backgroundColor = 'transparent';
+    topbar.style.borderBottom = 'none';
+  }
 }
 
-// Open modal for editing an existing user
+// --- Open modal for editing a user ---
 function openEditUserModal(user) {
   currentUserId = user.id;
   document.getElementById('modalTitle').textContent = "EDIT USER";
-  document.getElementById('userForm').action = "edit_user.php";
 
-  // Fill form fields
   document.getElementById('username').value = user.username;
-  document.getElementById('password').value = ''; // intentionally blank
+  document.getElementById('password').value = '';
   document.getElementById('phone').value = user.phone || '';
   document.getElementById('role').value = user.role;
   document.getElementById('branch').value = user.branch;
 
   document.getElementById('userModal').classList.add('show');
+
+  // Hide topbar background and border
+  const topbar = document.querySelector('.topbar');
+  if (topbar) {
+    topbar.style.backgroundColor = 'transparent';
+    topbar.style.borderBottom = 'none';
+  }
 }
 
-// Close modal
+// --- Close modal ---
 function closeUserModal() {
   document.getElementById('userModal').classList.remove('show');
 }
