@@ -1,3 +1,10 @@
+<?php
+require_once "db_connection.php";
+
+// Get dropdown data
+$unit = $conn->query("SELECT DISTINCT unit FROM Products");
+?>
+
 <div class="dashboard">
 
   <!-- Filters / header -->
@@ -5,24 +12,22 @@
     <div class="filters">
       <div class="filter-left">
         <label>Filter:</label>
-          <select name="role">
-            <option value="">Product</option>
-            <option value="Admin">Admin</option>
-            <option value="Owner">Owner</option>
-            <option value="Renter">Renter</option>
-          </select>
+        <select name="unit" onchange="loadProducts()">
+          <option value="">All Units</option>
+          <?php while ($u = $unit->fetch_assoc()): ?>
+            <option value="<?= htmlspecialchars($u['unit']) ?>"><?= strtoupper($u['unit']) ?></option>
+          <?php endwhile; ?>
+        </select>
 
-          <label>| Sort:</label>
-          <select name="branch">
-            <option value="">Lowest</option>
-            <option value="Manila">Manila</option>
-            <option value="Cebu">Cebu</option>
-            <option value="Davao">Davao</option>
-          </select>
+        <label>| Sort:</label>
+        <select name="sort" onchange="loadProducts()">
+          <option value="ASC">Lowest Price</option>
+          <option value="DESC">Highest Price</option>
+        </select>
       </div>
       <div class="filter-right">
         <label>Search:</label>
-        <input type="text" name="search" placeholder="Search user or branch...">
+        <input type="text" name="search" placeholder="Search product details..." onkeyup="loadProducts()">
         <button type="button" class="btn btn-primary" onclick="openAddProductModal()">+ Add Product</button>
       </div>
     </div>
@@ -42,40 +47,16 @@
           <th>Action</th>
         </tr>
       </thead>
-      <tbody>
-        <!-- Example rows (static demo data) -->
-        <tr>
-          <td class="right">001</td>
-          <td>Sugar Pack</td>
-          <td>Candy</td>
-          <td>Piece</td>
-          <td class="right">$20</td>
-          <td class="right">$30</td>
-          <td>
-            <button type="button" class="btn btn-warning btn-sm" onclick="openAddBranchModal()" >Edit</button>
-            <button type="button" class="btn btn-danger btn-sm">Delete</button>
-          </td>
-        </tr>
-        <tr>
-          <td class="right">002</td>
-          <td>Coffee Beans</td>
-          <td>Coffee</td>
-          <td>Piece</td>
-          <td class="right">$10</td>
-          <td class="right">$20</td>
-          <td>
-            <button type="button" class="btn btn-warning btn-sm" onclick="openAddBranchModal()">Edit</button>
-            <button type="button" class="btn btn-danger btn-sm">Delete</button>
-          </td>
-        </tr>
+      <tbody id="productTableBody">
+        <?php include "list_products.php"; ?>
       </tbody>
     </table>
   </div>
 
 
 <!-- Product Modal -->
-<div id="productModal" class="modal-overlay">
-  <div class="modal-box">
+<div id="productModal" class="product-modal-overlay">
+  <div class="product-modal-box">
     <h4 id="productModalTitle">ADD PRODUCT</h4>
 
     <form id="productForm" onsubmit="return false;">
@@ -105,80 +86,108 @@
       </div>
 
       <div class="modal-buttons">
-        <button type="button" class="btn btn-primary" onclick="saveProduct()">Save</button>
+        <button type="button" class="btn btn-primary" onclick="submitProduct()">Save</button>
         <button type="button" class="btn btn-danger" onclick="closeProductModal()">Cancel</button>
       </div>
     </form>
   </div>
 </div>
 
+
 <script>
 let currentProductId = null;
 
-// --- Open modal for adding a product ---
+function loadProducts() {
+    const form = document.getElementById("filterForm");
+    const formData = new FormData(form);
+
+    const params = new URLSearchParams(formData);
+
+    fetch("list_products.php?" + params.toString())
+        .then(res => res.text())
+        .then(html => {
+            document.getElementById("productTableBody").innerHTML = html;
+        });
+}
+
+
+// --- Add Product ---
 function openAddProductModal() {
-  currentProductId = null;
-  document.getElementById('productModalTitle').textContent = "ADD PRODUCT";
-  document.getElementById('productForm').reset();
-  document.getElementById('productModal').classList.add('show');
-
-  // Disable topbar background + border
-  const topbar = document.querySelector('.topbar');
-  if (topbar) {
-    topbar.style.backgroundColor = 'transparent';
-    topbar.style.borderBottom = 'none';
-  }
+    currentProductId = null;
+    document.getElementById("productModalTitle").textContent = "ADD PRODUCT";
+    document.getElementById("productForm").reset();
+    document.getElementById("productModal").classList.add("show");
 }
 
-// --- Open modal for editing an existing product ---
+// --- Edit Product ---
 function openEditProductModal(product) {
-  currentProductId = product.id;
-  document.getElementById('productModalTitle').textContent = "EDIT PRODUCT";
+    currentProductId = product.product_id;
 
-  // Fill fields
-  document.getElementById('productName').value = product.name;
-  document.getElementById('productDesc').value = product.description;
-  document.getElementById('productUnit').value = product.unit;
-  document.getElementById('costPrice').value = product.cost_price;
-  document.getElementById('sellingPrice').value = product.selling_price;
+    document.getElementById('productModalTitle').textContent = "EDIT PRODUCT";
+    document.getElementById('productName').value = product.product_name;
+    document.getElementById('productDesc').value = product.description;
+    document.getElementById('productUnit').value = product.unit;
+    document.getElementById('costPrice').value = product.cost_price;
+    document.getElementById('sellingPrice').value = product.selling_price;
 
-  document.getElementById('productModal').classList.add('show');
+    document.getElementById('productModal').classList.add('show');
 
-  // Disable topbar background + border
-  const topbar = document.querySelector('.topbar');
-  if (topbar) {
-    topbar.style.backgroundColor = 'transparent';
-    topbar.style.borderBottom = 'none';
-  }
+    const topbar = document.querySelector('.topbar');
+    if (topbar) {
+        topbar.style.backgroundColor = 'transparent';
+        topbar.style.borderBottom = 'none';
+    }
 }
 
-// --- Close modal ---
+
+// --- Save Product ---
+function submitProduct() {
+    const form = document.getElementById('productForm');
+    const formData = new FormData(form);
+
+    let url = currentProductId ? "edit_product.php" : "add_product.php";
+    if (currentProductId) formData.append("product_id", currentProductId);
+
+    fetch(url, {
+        method: "POST",
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert("Product saved successfully!");
+            closeProductModal();
+            loadProducts();
+        } else {
+            alert("Error:\n" + data.errors.join("\n"));
+        }
+    })
+    .catch(err => alert("Request failed: " + err));
+}
+
+
+// --- Delete Product ---
+function deleteProduct(id) {
+    if (!confirm("Delete this product?")) return;
+
+    fetch("delete_product.php", {
+        method: "POST",
+        body: new URLSearchParams({ product_id: id })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert("Product deleted.");
+            loadProducts();
+        } else {
+            alert("Error: " + data.message);
+        }
+    });
+}
+
 function closeProductModal() {
-  document.getElementById('productModal').classList.remove('show');
-  
-  // Restore topbar background + border
-  const topbar = document.querySelector('.topbar');
-  if (topbar) {
-    topbar.style.backgroundColor = '';
-    topbar.style.borderBottom = '';
-  }
+    document.getElementById("productModal").classList.remove("show");
 }
 
-// --- Temporary save (frontend only) ---
-function saveProduct() {
-  const name = document.getElementById('productName').value.trim();
-  const desc = document.getElementById('productDesc').value.trim();
-  const unit = document.getElementById('productUnit').value.trim();
-  const cost = document.getElementById('costPrice').value.trim();
-  const sell = document.getElementById('sellingPrice').value.trim();
-
-  if (!name || !desc || !unit || !cost || !sell) {
-    alert("Please fill out all fields.");
-    return;
-  }
-
-  alert(`Product ${currentProductId ? "updated" : "added"} successfully!`);
-  closeProductModal();
-}
 </script>
 

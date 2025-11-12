@@ -141,7 +141,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       <?php else: ?>
         <h2>Enter OTP</h2>
         <div id="otp-section">
-          <input type="text" id="otp" maxlength="6" placeholder="6-digit OTP" class="textbox" style="width:200px;"><br><br>
+          <input type="text" id="otp" maxlength="6" placeholder="6-digit OTP" class="textbox"><br><br>
           <button id="verifyBtn" onclick="verifyOTP()">Verify OTP</button>
           <button id="resendBtn" onclick="resendOTP()" disabled>Resend OTP (<span id="countdown">30</span>s)</button>
           <p id="otpMessage" style="color:green;"></p>
