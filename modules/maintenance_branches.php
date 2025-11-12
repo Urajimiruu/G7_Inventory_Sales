@@ -24,26 +24,53 @@
         </tr>
       </thead>
       <tbody>
-        <!-- Example rows (static demo data) -->
-        <tr>
-          <td>001</td>
-          <td>Sugar Pack</td>
-          <td>Main Branch</td>
-          <td>
-            <button type="button" class="btn btn-warning btn-sm" onclick="openAddBranchModal()" >Edit</button>
-            <button type="button" class="btn btn-danger btn-sm">Delete</button>
-          </td>
-        </tr>
-        <tr>
-          <td>002</td>
-          <td>Coffee Beans</td>
-          <td>Shop 2</td>
-          <td>
-            <button type="button" class="btn btn-warning btn-sm" onclick="openAddBranchModal()">Edit</button>
-            <button type="button" class="btn btn-danger btn-sm">Delete</button>
-          </td>
-        </tr>
-      </tbody>
+<?php
+require_once "db_connection.php";
+
+$branchesTable = "branches";
+$productsTable = "products";
+$mainInvTable  = "maininventory";
+
+$sql = "
+  SELECT 
+    b.branch_id,
+    b.branch_name,
+    b.location
+  FROM $branchesTable b
+  CROSS JOIN $productsTable p
+  LEFT JOIN $mainInvTable m ON p.product_id = m.product_id
+  ORDER BY b.branch_id ASC
+";
+
+$result = $conn->query($sql);
+
+if ($result === false) {
+  die('SQL Error: ' . $conn->error);
+}
+
+if ($result->num_rows > 0) {
+  while ($row = $result->fetch_assoc()) {
+    $branchId = (int)$row['branch_id'];
+    $branchName = htmlspecialchars($row['branch_name'], ENT_QUOTES, 'UTF-8');
+    $location = htmlspecialchars($row['location'] ?? '—', ENT_QUOTES, 'UTF-8');
+
+    echo "<tr>
+            <td class='right'>{$branchId}</td>
+            <td>{$branchName}</td>
+            <td>{$location}</td>
+            <td>
+              <button type='button' class='btn btn-warning btn-sm' disabled>Edit</button>
+              <button type='button' class='btn btn-danger btn-sm' disabled>Delete</button>
+            </td>
+          </tr>";
+  }
+} else {
+  echo "<tr><td colspan='5' style='text-align:center;'>No products found</td></tr>";
+}
+
+$conn->close();
+?>
+</tbody>
     </table>
   </div>
 

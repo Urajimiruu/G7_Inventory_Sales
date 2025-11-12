@@ -42,32 +42,56 @@
           <th>Action</th>
         </tr>
       </thead>
-      <tbody>
-        <!-- Example rows (static demo data) -->
-        <tr>
-          <td class="right">001</td>
-          <td>Sugar Pack</td>
-          <td>Candy</td>
-          <td>Piece</td>
-          <td class="right">$20</td>
-          <td class="right">$30</td>
-          <td>
-            <button type="button" class="btn btn-warning btn-sm" onclick="openAddBranchModal()" >Edit</button>
-            <button type="button" class="btn btn-danger btn-sm">Delete</button>
-          </td>
-        </tr>
-        <tr>
-          <td class="right">002</td>
-          <td>Coffee Beans</td>
-          <td>Coffee</td>
-          <td>Piece</td>
-          <td class="right">$10</td>
-          <td class="right">$20</td>
-          <td>
-            <button type="button" class="btn btn-warning btn-sm" onclick="openAddBranchModal()">Edit</button>
-            <button type="button" class="btn btn-danger btn-sm">Delete</button>
-          </td>
-        </tr>
+        <tbody>
+          <?php
+          require_once "db_connection.php";
+
+          $productsTable = "products";
+          $mainInvTable  = "maininventory"; // change if needed
+
+          $sql = "
+            SELECT 
+              p.product_id,
+              p.product_name,
+              p.description,
+              p.unit,
+              p.cost_price,
+              p.selling_price
+            FROM $productsTable p
+            LEFT JOIN $mainInvTable m ON p.product_id = m.product_id
+            ORDER BY p.product_id ASC
+          ";
+
+          $result = $conn->query($sql);
+
+          if ($result && $result->num_rows > 0) {
+            while ($row = $result->fetch_assoc()) {
+              $productId   = (int)$row['product_id'];
+              $productName = htmlspecialchars($row['product_name'], ENT_QUOTES, 'UTF-8');
+              $description = htmlspecialchars($row['description'], ENT_QUOTES, 'UTF-8');
+              $unit        = htmlspecialchars($row['unit'], ENT_QUOTES, 'UTF-8');
+              $costPrice   = number_format((float)$row['cost_price'], 2);
+              $sellPrice   = number_format((float)$row['selling_price'], 2);
+
+              echo "<tr>
+                      <td class='right'>{$productId}</td>
+                      <td>{$productName}</td>
+                      <td class='muted'>{$description}</td>
+                      <td class='right'>{$unit}</td>
+                      <td class='right'>{$costPrice}</td>
+                      <td class='right'>{$sellPrice}</td>
+                      <td>
+          <button type='button' class='btn btn-warning btn-sm' disabled>Edit</button>
+          <button type='button' class='btn btn-danger btn-sm' disabled>Delete</button>
+                      </td>
+                    </tr>";
+            }
+          } else {
+            echo "<tr><td colspan='6' style='text-align:center;'>No products found</td></tr>";
+          }
+
+          $conn->close();
+          ?>
       </tbody>
     </table>
   </div>
