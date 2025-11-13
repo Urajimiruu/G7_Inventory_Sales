@@ -78,7 +78,7 @@ label {
 }
 
 input[type="text"], input[type="password"] {
-  width: 100%;
+  width: 93%;
   padding: 10px 12px;
   border: 1px solid #CBD5E1;
   border-radius: 8px;
@@ -91,6 +91,16 @@ input:focus {
   border-color: #0EA5E9;
   outline: none;
 }
+
+.textbox {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #94A3B8; /* light gray border */
+  border-radius: 8px;
+  font-size: 16px;
+  margin-top: 10px;
+}
+
 
 .btn-login, #verifyBtn, #resendBtn {
   width: 100%;

@@ -1,6 +1,6 @@
 <?php
-
-require_once "db_connection.php"; // adjust path if this file is not in /modules
+// report_sale.php
+require_once "db_connection.php";
 
 if (!isset($_SESSION['user_id'])) {
     header("Location: index.php");
@@ -11,143 +11,183 @@ $role     = $_SESSION['role'] ?? '';
 $branchId = (int)($_SESSION['branch_id'] ?? 0);
 ?>
 
-<div class="dashboard">
+<div class="dashboard sale-report-dashboard">
 
-  <!-- 🔍 Filters -->
-  <form id="filterForm" class="filter-form">
-    <div class="filters">
-      <div class="filter-left">
-        <label>Filter:</label>
-        <select name="role">
-          <option value="">Product</option>
-          <option value="Admin">Admin</option>
-          <option value="Owner">Owner</option>
-          <option value="Renter">Renter</option>
-        </select>
+  <div class="sale-report-header">
+    <div class="sale-filters-left">
+      <!-- Branch filter -->
+      <select id="saleFilterBranch" onchange="loadSales()">
+        <option value="">All Branches</option>
+        <?php
+        $bq = $conn->query("SELECT branch_id, branch_name FROM branches ORDER BY branch_name");
+        while ($b = $bq->fetch_assoc()) {
+            echo "<option value='{$b['branch_id']}'>{$b['branch_name']}</option>";
+        }
+        ?>
+      </select>
 
-        <label>Filter:</label>
-        <select name="role">
-          <option value="">Product</option>
-          <option value="Admin">Admin</option>
-          <option value="Owner">Owner</option>
-          <option value="Renter">Renter</option>
-        </select>
+      <!-- Product filter -->
+      <select id="saleFilterProduct" onchange="loadSales()">
+        <option value="">All Products</option>
+        <?php
+        $pq = $conn->query("SELECT product_id, product_name FROM products ORDER BY product_name");
+        while ($p = $pq->fetch_assoc()) {
+            echo "<option value='{$p['product_id']}'>{$p['product_name']}</option>";
+        }
+        ?>
+      </select>
 
-        <label>| From:</label>
-        <select name="fromBranch">
-          <option value=""></option>
-        </select>
+      <!-- Date range -->
+      <label for="saleFrom" class="sr-only"><b>From:</b></label>
+      <input type="date" id="saleFrom" onchange="loadSales()">
 
-        <label>To:</label>
-        <select name="toBranch">
-          <option value=""></option>
-        </select>
+      <label for="saleTo" class="sr-only"><b>To:</b></label>
+      <input type="date" id="saleTo" onchange="loadSales()">
+
+      <!-- Sort -->
+      <label for="saleFrom" class="sr-only"><b>Sort:</b></label>
+      <select id="saleSort" onchange="loadSales()">
+        <option value="date_desc">Newest</option>
+        <option value="date_asc">Oldest</option>
+        <option value="total_sales_desc">Highest Sales</option>
+        <option value="profit_desc">Highest Profit</option>
+      </select>
+
+      <!-- View toggle style 2: "View: Detailed | Summary" -->
+      <div class="view-toggle">
+        <button id="viewDetailed" class="view-btn active" onclick="setView('detailed')">Detailed</button>
+        <button id="viewSummary" class="view-btn" onclick="setView('summary')">Summary</button>
       </div>
 
-      <div class="filter-right">
-      <?php
-      $pagePrefix = ($_SESSION['role'] === 'admin') ? 'admin.php' : 'shop.php';
-      ?>
-      <button type="button" class="btn btn-primary" onclick="window.location.href='<?php echo $pagePrefix; ?>?page=returns'">Export</button>
+      <!-- When summary selected, allow daily grouping -->
+      <select id="groupByDate" onchange="loadSales()">
+        <option value="none">Overall Totals</option>
+        <option value="daily">Group by Date (Daily)</option>
+      </select>
 
-      </div>
     </div>
-  </form>
 
-  <!-- 📋 Table -->
+    <div class="sale-filters-right">
+      <input type="text" id="saleSearch" placeholder="Search..." onkeyup="debouncedLoadSales()">
+      <button type="button" class="btn btn-success sale-export-btn" onclick="exportSales()">Export</button>
+    </div>
+  </div>
 
-    <div class="table-scroll" role="region" aria-label="Products table">
-      <table class="vertical" aria-describedby="caption-vertical">
-       <thead>
-      <tr>
-        <th scope="col">Date</th>
-        <th scope="col">Product</th>
-        <th scope="col">Branch</th>
-        <th scope="col" class="right">Quantity</th>
-        <th scope="col" class="right">Unit Price</th>
-        <th scope="col" class="right">Total</th>
-        <th scope="col">Action</th>
-      </tr>
-    </thead>
+  <div class="table-scroll sale-report-table-wrapper">
+    <table class="user-table sale-report-table">
+      <thead id="saleTableHead">
+        <!-- header will be static but we keep it here for accessibility; rows loaded by AJAX -->
+        <tr id="saleHeaderRow">
+          <th>Branch</th>
+          <th>Product</th>
+          <th>Date</th>
+          <th class="right">Qty</th>
+          <th class="right">Selling Price</th>
+          <th class="right">Total Sales</th>
+          <th class="right">Total Cost</th>
+          <th class="right">Profit</th>
+        </tr>
+      </thead>
+      <tbody id="saleReportBody">
+        <!-- AJAX rows here -->
+      </tbody>
+    </table>
+  </div>
+</div>
 
-       <tbody>
-<tbody>
-<?php
-// base query
-$sql = "
-SELECT 
-    bi.branch_id,
-    bi.product_id,
-    bi.quantity,
-    p.product_name,
-    p.unit,
-    p.cost_price,
-    p.selling_price,
-    b.branch_name
-FROM branchinventory bi
-JOIN products  p ON bi.product_id = p.product_id
-JOIN branches  b ON bi.branch_id = b.branch_id
-";
+<script>
+let viewMode = 'detailed'; // default
+let debounceTimer = null;
 
-// if role is "shop", restrict to their branch only
-// adjust 'shop' to match exactly what you store in the Users.role column (Shop / SH0P / etc.)
-if (strtolower($role) === 'shop' && $branchId > 0) {
-    $sql .= " WHERE bi.branch_id = ? ";
-}
+function setView(mode) {
+    viewMode = mode;
+    document.getElementById('viewDetailed').classList.toggle('active', mode === 'detailed');
+    document.getElementById('viewSummary').classList.toggle('active', mode === 'summary');
 
-$sql .= " ORDER BY b.branch_name, p.product_name";
+    // show/hide Date grouping control based on mode
+    document.getElementById('groupByDate').style.display = (mode === 'summary') ? 'inline-block' : 'none';
 
-if (strtolower($role) === 'shop' && $branchId > 0) {
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $branchId);
-    $stmt->execute();
-    $result = $stmt->get_result();
-} else {
-    // admin / owner / whatever: show all branches
-    $result = $conn->query($sql);
-}
-
-if ($result && $result->num_rows > 0) {
-  while ($row = $result->fetch_assoc()) {
-    $branchName   = htmlspecialchars($row['branch_name'], ENT_QUOTES, 'UTF-8');
-    $productName  = htmlspecialchars($row['product_name'], ENT_QUOTES, 'UTF-8');
-    $unit         = htmlspecialchars($row['unit'], ENT_QUOTES, 'UTF-8');
-    $costPrice    = number_format((float)$row['cost_price'], 2);
-    $sellingPrice = number_format((float)$row['selling_price'], 2);
-    $qty          = (int)$row['quantity'];
-
-    // status logic
-    if ($qty === 0) {
-      $statusText  = 'No Stock';
-      $statusClass = 'no-stock';
-    } elseif ($qty < 20) {
-      $statusText  = 'Low Stock';
-      $statusClass = 'low-stock';
+    // adjust table header depending on mode
+    const headerRow = document.getElementById('saleHeaderRow');
+    if (mode === 'detailed') {
+        headerRow.innerHTML = `
+          <th>Branch</th>
+          <th>Product</th>
+          <th>Date</th>
+          <th class="right">Qty</th>
+          <th class="right">Selling Price</th>
+          <th class="right">Total Sales</th>
+          <th class="right">Total Cost</th>
+          <th class="right">Profit</th>
+        `;
     } else {
-      $statusText  = 'On Stock';
-      $statusClass = 'on-stock';
+        headerRow.innerHTML = `
+          <th>Branch</th>
+          <th>Product</th>
+          <th class="right">Total Qty</th>
+          <th class="right">Total Sales</th>
+          <th class="right">Total Cost</th>
+          <th class="right">Profit</th>
+        `;
     }
 
-    echo "
-      <tr>
-        <td>{$branchName}</td>
-        <td>{$productName}</td>
-        <td class='muted'>{$unit}</td>
-        <td class='right'>₱{$costPrice}</td>
-        <td class='right'>₱{$sellingPrice}</td>
-        <td class='right'>{$qty}</td>
-        <td><span class='status {$statusClass}'><span class='dot'></span>{$statusText}</span></td>
-      </tr>
-    ";
-  }
-} else {
-  echo "<tr><td colspan='7' style='text-align:center;'>No branch inventory found</td></tr>";
+    loadSales();
 }
 
-$conn->close();
-?>
-</tbody>
+function gatherParams() {
+    return {
+        view: viewMode,
+        branch: document.getElementById('saleFilterBranch').value || '',
+        product: document.getElementById('saleFilterProduct').value || '',
+        from: document.getElementById('saleFrom').value || '',
+        to: document.getElementById('saleTo').value || '',
+        sort: document.getElementById('saleSort').value || '',
+        group: document.getElementById('groupByDate').value || 'none',
+        search: document.getElementById('saleSearch').value.trim() || ''
+    };
+}
+
+function paramsToQuery(params) {
+    const q = new URLSearchParams();
+    for (const k in params) {
+        if (params[k] !== '') q.append(k, params[k]);
+    }
+    return q.toString();
+}
+
+function loadSales() {
+    const params = gatherParams();
+    fetch('fetch_sales_report.php?' + paramsToQuery(params))
+        .then(res => res.text())
+        .then(html => {
+            document.getElementById('saleReportBody').innerHTML = html;
+        })
+        .catch(err => {
+            console.error(err);
+            document.getElementById('saleReportBody').innerHTML = '<tr><td colspan="8" style="text-align:center;">Request failed</td></tr>';
+        });
+}
+
+// debounce for search
+function debouncedLoadSales() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(loadSales, 300);
+}
+
+function exportSales() {
+    const params = gatherParams(); // get current filters
+    const query = new URLSearchParams(params).toString();
+
+    // open export in new tab
+    window.open('export_sales_report.php?' + query, '_blank');
+}
 
 
-      </table>
-    </div>
+// init UI
+document.addEventListener('DOMContentLoaded', function () {
+    // initial view setup
+    setView('detailed');
+    // hide grouping control initially (only shown for summary)
+    document.getElementById('groupByDate').style.display = 'none';
+});
+</script>

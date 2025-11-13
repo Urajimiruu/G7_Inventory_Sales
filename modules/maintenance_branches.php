@@ -1,19 +1,23 @@
+<?php
+require_once "db_connection.php";
+?>
+
 <div class="dashboard">
 
-  <!-- Filters / header -->
+  <!-- Search / Add -->
   <form id="filterForm" class="filter-form">
     <div class="filters">
       <div class="filter-left"></div>
       <div class="filter-right">
         <label>Search:</label>
-        <input type="text" name="search" placeholder="Search user or branch...">
+        <input type="text" name="search" placeholder="Search branch..." onkeyup="loadBranches()">
         <button type="button" class="btn btn-primary" onclick="openAddBranchModal()">+ Add Branch</button>
       </div>
     </div>
   </form>
 
-  <!-- Sales table -->
-  <div class="table-scroll" role="region" aria-label="Sales table">
+  <!-- Branches table -->
+  <div class="table-scroll" role="region" aria-label="Branches table">
     <table class="vertical" aria-describedby="caption-vertical">
       <thead>
         <tr>
@@ -23,35 +27,18 @@
           <th>Action</th>
         </tr>
       </thead>
-      <tbody>
-        <!-- Example rows (static demo data) -->
-        <tr>
-          <td>001</td>
-          <td>Sugar Pack</td>
-          <td>Main Branch</td>
-          <td>
-            <button type="button" class="btn btn-warning btn-sm" onclick="openAddBranchModal()" >Edit</button>
-            <button type="button" class="btn btn-danger btn-sm">Delete</button>
-          </td>
-        </tr>
-        <tr>
-          <td>002</td>
-          <td>Coffee Beans</td>
-          <td>Shop 2</td>
-          <td>
-            <button type="button" class="btn btn-warning btn-sm" onclick="openAddBranchModal()">Edit</button>
-            <button type="button" class="btn btn-danger btn-sm">Delete</button>
-          </td>
-        </tr>
+      <tbody id="branchTableBody">
+        <?php include "list_branches.php"; ?>
       </tbody>
     </table>
   </div>
 
+</div>
 
 <!-- Branch Modal -->
 <div id="branchModal" class="modal-overlay">
   <div class="modal-box">
-    <h4 id="modalTitle">ADD/EDIT BRANCH</h4>
+    <h4 id="branchModalTitle">ADD BRANCH</h4>
 
     <form id="branchForm" onsubmit="return false;">
       <div class="form-row">
@@ -61,11 +48,11 @@
 
       <div class="form-row">
         <label for="branchLocation">Location:</label>
-        <input type="text" id="branchLocation" name="branch_location" placeholder="Enter location" required>
+        <input type="text" id="branchLocation" name="location" placeholder="Enter location" required>
       </div>
 
       <div class="modal-buttons">
-        <button type="button" class="btn btn-primary" onclick="saveBranch()">Save</button>
+        <button type="button" class="btn btn-primary" onclick="submitBranch()">Save</button>
         <button type="button" class="btn btn-danger" onclick="closeBranchModal()">Cancel</button>
       </div>
     </form>
@@ -75,61 +62,75 @@
 <script>
 let currentBranchId = null;
 
-// --- Open modal for adding a branch ---
+function loadBranches() {
+    const search = document.querySelector('input[name="search"]').value.trim();
+    fetch("list_branches.php?search=" + encodeURIComponent(search))
+        .then(res => res.text())
+        .then(html => {
+            document.getElementById("branchTableBody").innerHTML = html;
+        });
+}
+
+// --- Add Branch ---
 function openAddBranchModal() {
-  currentBranchId = null;
-  document.getElementById('modalTitle').textContent = "ADD/EDIT BRANCH";
-  document.getElementById('branchForm').reset();
-  document.getElementById('branchModal').classList.add('show');
-  
-  // Disable topbar background + border
-  const topbar = document.querySelector('.topbar');
-  if (topbar) {
-    topbar.style.backgroundColor = 'transparent';
-    topbar.style.borderBottom = 'none';
-  }
+    currentBranchId = null;
+    document.getElementById("branchModalTitle").textContent = "ADD BRANCH";
+    document.getElementById("branchForm").reset();
+    document.getElementById("branchModal").classList.add("show");
 }
 
-// --- Open modal for editing a branch ---
+// --- Edit Branch ---
 function openEditBranchModal(branch) {
-  currentBranchId = branch.id;
-  document.getElementById('modalTitle').textContent = "EDIT BRANCH";
-
-  document.getElementById('branchName').value = branch.name;
-  document.getElementById('branchLocation').value = branch.location;
-  document.getElementById('branchModal').classList.add('show');
-
-  // Disable topbar background + border
-  const topbar = document.querySelector('.topbar');
-  if (topbar) {
-    topbar.style.backgroundColor = 'transparent';
-    topbar.style.borderBottom = 'none';
-  }
+    currentBranchId = branch.branch_id;
+    document.getElementById("branchModalTitle").textContent = "EDIT BRANCH";
+    document.getElementById("branchName").value = branch.branch_name;
+    document.getElementById("branchLocation").value = branch.location;
+    document.getElementById("branchModal").classList.add("show");
 }
 
-// --- Close modal ---
+// --- Close Modal ---
 function closeBranchModal() {
-  document.getElementById('branchModal').classList.remove('show');
-  
-  // Restore topbar background + border
-  const topbar = document.querySelector('.topbar');
-  if (topbar) {
-    topbar.style.backgroundColor = '';  // reverts to original CSS
-    topbar.style.borderBottom = '';
-  }
+    document.getElementById("branchModal").classList.remove("show");
 }
 
-// --- Temporary save function (frontend only) ---
-function saveBranch() {
-  const name = document.getElementById('branchName').value.trim();
-  const location = document.getElementById('branchLocation').value.trim();
+// --- Save Branch (Add/Edit) ---
+function submitBranch() {
+    const form = document.getElementById("branchForm");
+    const formData = new FormData(form);
+    let url = currentBranchId ? "edit_branches.php" : "add_branches.php";
 
-  if (!name || !location) {
-    alert("Please fill out all fields.");
-    return;
-  }
+    if (currentBranchId) formData.append("branch_id", currentBranchId);
 
-  alert(`Branch ${currentBranchId ? "updated" : "added"} successfully!`);
-  closeBranchModal();
+    fetch(url, { method: "POST", body: formData })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert("Branch saved successfully!");
+                closeBranchModal();
+                loadBranches();
+            } else {
+                alert("Error:\n" + data.errors.join("\n"));
+            }
+        })
+        .catch(err => alert("Request failed: " + err));
+}
+
+// --- Delete Branch ---
+function deleteBranch(id) {
+    if (!confirm("Delete this branch?")) return;
+
+    fetch("delete_branches.php", {
+        method: "POST",
+        body: new URLSearchParams({ branch_id: id })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert("Branch deleted successfully.");
+            loadBranches();
+        } else {
+            alert("Error: " + data.message);
+        }
+    });
 }
 </script>

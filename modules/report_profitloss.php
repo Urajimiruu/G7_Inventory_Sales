@@ -1,6 +1,5 @@
 <?php
-
-require_once "db_connection.php"; // adjust path if this file is not in /modules
+require_once "db_connection.php";
 
 if (!isset($_SESSION['user_id'])) {
     header("Location: index.php");
@@ -11,143 +10,114 @@ $role     = $_SESSION['role'] ?? '';
 $branchId = (int)($_SESSION['branch_id'] ?? 0);
 ?>
 
-<div class="dashboard">
+<div class="dashboard profitloss-dashboard">
 
-  <!-- 🔍 Filters -->
-  <form id="filterForm" class="filter-form">
-    <div class="filters">
-      <div class="filter-left">
-        <label>Filter:</label>
-        <select name="role">
-          <option value="">Product</option>
-          <option value="Admin">Admin</option>
-          <option value="Owner">Owner</option>
-          <option value="Renter">Renter</option>
-        </select>
+  <!-- Search + Filters + Export -->
+  <div class="profitloss-header">
 
-        <label>Filter:</label>
-        <select name="role">
-          <option value="">Product</option>
-          <option value="Admin">Admin</option>
-          <option value="Owner">Owner</option>
-          <option value="Renter">Renter</option>
-        </select>
+      <div class="profitloss-filters-left">
+          <!-- Branch Filter -->
+          <label><b>Branch:</b></label>
+          <select id="filterBranch" onchange="loadProfitLoss()">
+              <option value="">All Branches</option>
+              <?php
+              $bq = $conn->query("SELECT branch_id, branch_name FROM branches ORDER BY branch_name");
+              while ($b = $bq->fetch_assoc()) {
+                  echo "<option value='{$b['branch_id']}'>{$b['branch_name']}</option>";
+              }
+              ?>
+          </select>
 
-        <label>| From:</label>
-        <select name="fromBranch">
-          <option value=""></option>
-        </select>
+          <!-- Product Filter -->
+          <label><b>| Product:</b></label>
+          <select id="filterProduct" onchange="loadProfitLoss()">
+              <option value="">All Products</option>
+              <?php
+              $pq = $conn->query("SELECT product_id, product_name FROM products ORDER BY product_name");
+              while ($p = $pq->fetch_assoc()) {
+                  echo "<option value='{$p['product_id']}'>{$p['product_name']}</option>";
+              }
+              ?>
+          </select>
 
-        <label>To:</label>
-        <select name="toBranch">
-          <option value=""></option>
-        </select>
+          <!-- Sort Option -->
+          <label><b>| Sort:</b></label>
+          <select id="sortProfit" onchange="loadProfitLoss()">
+              <option value="">Sort By Profit</option>
+              <option value="asc">Lowest → Highest</option>
+              <option value="desc">Highest → Lowest</option>
+          </select>
       </div>
 
-      <div class="filter-right">
-      <?php
-      $pagePrefix = ($_SESSION['role'] === 'admin') ? 'admin.php' : 'shop.php';
-      ?>
-      <button type="button" class="btn btn-primary" onclick="window.location.href='<?php echo $pagePrefix; ?>?page=returns'">Export</button>
-
+      <div class="profitloss-filters-right">
+          <label><b>Search:</b></label>
+          <input type="text" id="profitLossSearch" placeholder="Search branch or product..." onkeyup="loadProfitLoss()">
+          <button type="button" class="btn btn-success profitloss-export-btn" onclick="exportProfitLoss()">Export</button>
       </div>
-    </div>
-  </form>
 
-  <!-- 📋 Table -->
+  </div>
 
-    <div class="table-scroll" role="region" aria-label="Products table">
-      <table class="vertical" aria-describedby="caption-vertical">
-       <thead>
-      <tr>
-        <th scope="col"></th>
-        <th scope="col"></th>
-        <th scope="col"></th>
-        <th scope="col" class="right"></th>
-        <th scope="col" class="right"></th>
-        <th scope="col" class="right"></th>
-        <th scope="col"></th>
-      </tr>
-    </thead>
 
-       <tbody>
-<tbody>
-<?php
-// base query
-$sql = "
-SELECT 
-    bi.branch_id,
-    bi.product_id,
-    bi.quantity,
-    p.product_name,
-    p.unit,
-    p.cost_price,
-    p.selling_price,
-    b.branch_name
-FROM branchinventory bi
-JOIN products  p ON bi.product_id = p.product_id
-JOIN branches  b ON bi.branch_id = b.branch_id
-";
+  <!-- Table -->
+  <div class="table-scroll profitloss-table-wrapper">
+    <table class="user-table profitloss-table">
+      <thead>
+        <tr>
+          <th>Branch</th>
+          <th>Product</th>
+          <th class="right">Total Quantity Sold</th>
+          <th class="right">Total Sales</th>
+          <th class="right">Total Cost</th>
+          <th class="right">Profit / Loss</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="profitLossBody">
+        <!-- AJAX rows will load here -->
+      </tbody>
+    </table>
+  </div>
+</div>
 
-// if role is "shop", restrict to their branch only
-// adjust 'shop' to match exactly what you store in the Users.role column (Shop / SH0P / etc.)
-if (strtolower($role) === 'shop' && $branchId > 0) {
-    $sql .= " WHERE bi.branch_id = ? ";
+<script>
+function loadProfitLoss() {
+    const search  = document.getElementById('profitLossSearch').value.trim();
+    const branch  = document.getElementById('filterBranch').value;
+    const product = document.getElementById('filterProduct').value;
+    const sort    = document.getElementById('sortProfit').value;
+
+    const params = new URLSearchParams({
+        search: search,
+        branch: branch,
+        product: product,
+        sort: sort
+    });
+
+    fetch('fetch_profitloss_report.php?' + params.toString())
+        .then(res => res.text())
+        .then(html => {
+            document.getElementById('profitLossBody').innerHTML = html;
+        });
 }
 
-$sql .= " ORDER BY b.branch_name, p.product_name";
+// Initial load
+loadProfitLoss();
 
-if (strtolower($role) === 'shop' && $branchId > 0) {
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $branchId);
-    $stmt->execute();
-    $result = $stmt->get_result();
-} else {
-    // admin / owner / whatever: show all branches
-    $result = $conn->query($sql);
+// Placeholder for export
+function exportProfitLoss() {
+    const search  = document.getElementById('profitLossSearch').value.trim();
+    const branch  = document.getElementById('filterBranch').value;
+    const product = document.getElementById('filterProduct').value;
+    const sort    = document.getElementById('sortProfit').value;
+
+    const params = new URLSearchParams({
+        search: search,
+        branch: branch,
+        product: product,
+        sort: sort
+    });
+
+    window.location.href = 'export_profitloss_report.php?' + params.toString();
 }
 
-if ($result && $result->num_rows > 0) {
-  while ($row = $result->fetch_assoc()) {
-    $branchName   = htmlspecialchars($row['branch_name'], ENT_QUOTES, 'UTF-8');
-    $productName  = htmlspecialchars($row['product_name'], ENT_QUOTES, 'UTF-8');
-    $unit         = htmlspecialchars($row['unit'], ENT_QUOTES, 'UTF-8');
-    $costPrice    = number_format((float)$row['cost_price'], 2);
-    $sellingPrice = number_format((float)$row['selling_price'], 2);
-    $qty          = (int)$row['quantity'];
-
-    // status logic
-    if ($qty === 0) {
-      $statusText  = 'No Stock';
-      $statusClass = 'no-stock';
-    } elseif ($qty < 20) {
-      $statusText  = 'Low Stock';
-      $statusClass = 'low-stock';
-    } else {
-      $statusText  = 'On Stock';
-      $statusClass = 'on-stock';
-    }
-
-    echo "
-      <tr>
-        <td>{$branchName}</td>
-        <td>{$productName}</td>
-        <td class='muted'>{$unit}</td>
-        <td class='right'>₱{$costPrice}</td>
-        <td class='right'>₱{$sellingPrice}</td>
-        <td class='right'>{$qty}</td>
-        <td><span class='status {$statusClass}'><span class='dot'></span>{$statusText}</span></td>
-      </tr>
-    ";
-  }
-} else {
-  echo "<tr><td colspan='7' style='text-align:center;'>No branch inventory found</td></tr>";
-}
-
-$conn->close();
-?>
-</tbody>
-
-
-      </table>
-    </div>
+</script>

@@ -233,3 +233,523 @@
   margin-top: 15px;
 }
 
+
+/* USER MODULE MODAL */
+
+.user-modal-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(0,0,0,0.6) !important;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 100000 !important;
+}
+
+.user-modal-overlay.show {
+  display: flex;
+}
+
+.user-modal-box {
+  background-color: #fff !important; /* only the inner box is white */
+  padding: 20px 25px !important;
+  border-radius: 10px !important;
+  width: 500px !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;
+  position: relative !important;
+}
+
+.user-modal-box h4 {
+  font-size: 1.3rem;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.user-modal-box .form-row {
+  display: flex;
+  margin-bottom: 12px;
+}
+
+.user-modal-box .form-row label {
+  width: 120px;
+  font-weight: 500;
+  text-align: right;
+  margin-right: 10px;
+}
+
+.user-modal-box input,
+.user-modal-box select {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.user-modal-box .modal-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 18px;
+}
+
+
+/* ================================
+   PRODUCT MODULE MODAL (isolated)
+   ================================ */
+
+.product-modal-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(0,0,0,0.6) !important;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 100000 !important;
+}
+
+.product-modal-overlay.show {
+  display: flex;
+}
+
+.product-modal-box {
+  background-color: #fff !important;
+  padding: 20px 25px !important;
+  border-radius: 10px !important;
+  width: 600px !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;
+  position: relative !important;
+}
+
+.product-modal-box h4 {
+  font-size: 1.2rem;
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.product-modal-box .form-row {
+  display: flex;
+  margin-bottom: 12px;
+}
+
+.product-modal-box .form-row label {
+  width: 120px;
+  text-align: right;
+  margin-right: 10px;
+}
+
+.product-modal-box input,
+.product-modal-box textarea {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.product-modal-box .modal-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+/* === Inventory Report === */
+.inv-report-dashboard {
+  padding: 20px;
+  background: #fff;
+  border-radius: 10px;
+}
+
+.inv-report-header {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.inv-report-header input {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.inv-export-btn {
+  background-color: #28a745 !important; /* Green */
+  color: white !important;
+  padding: 7px 12px;
+}
+
+.inv-export-btn:hover {
+  background-color: #218838 !important;
+}
+
+/* Table styling */
+.inv-report-table-wrapper {
+  overflow-x: auto;
+}
+
+.inv-report-table th, .inv-report-table td {
+  padding: 10px;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+.inv-report-table th {
+  background-color: #f3f3f3;
+}
+
+.inv-report-table tr:hover {
+  background-color: #f9f9f9;
+}
+
+.inv-report-table .right {
+  text-align: right;
+}
+
+/* Stock status colors */
+.inv-no-stock {
+  color: #dc3545;
+  font-weight: bold;
+}
+
+.inv-low-stock {
+  color: #ffc107;
+  font-weight: bold;
+}
+
+.inv-on-stock {
+  color: #28a745;
+  font-weight: bold;
+}
+
+/* ===== Inventory Report Status ===== */
+.inv-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+}
+
+.dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+/* Colors */
+.inv-on-stock {
+    background-color: #28a745; /* green */
+}
+
+.inv-low-stock {
+    background-color: #ffc107; /* yellow */
+}
+
+.inv-no-stock {
+    background-color: #dc3545; /* red */
+}
+
+/* ================================
+   Inventory Report – Filter Layout
+   ================================ */
+
+.inv-report-header {
+    display: flex;
+    justify-content: space-between; /* push left and right apart */
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+}
+
+/* Left side filters */
+.inv-filters-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* Right side search + export */
+.inv-filters-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Inputs & selects styling */
+.inv-report-header select,
+.inv-report-header input {
+    padding: 7px 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+/* Expand search bar */
+.inv-filters-right input {
+    width: 200px;
+}
+
+/* Make small selects consistent size */
+.inv-report-header select {
+    min-width: 150px;
+}
+
+
+/* === Sales Report Styles === */
+.sale-report-dashboard {
+  padding: 20px;
+  background: #fff;
+  border-radius: 10px;
+}
+
+.sale-report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 15px;
+}
+
+.sale-filters-left {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.sale-filters-right {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* view toggle buttons (style 2) */
+.view-toggle .view-btn {
+  background: transparent;
+  border: 1px solid #ddd;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-right: 4px;
+}
+.view-toggle .view-btn.active {
+  background: #007bff;
+  color: #fff;
+  border-color: #007bff;
+}
+
+/* search and export */
+.sale-filters-right input[type="text"] {
+  min-width: 150px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+/* export button (green) */
+.sale-export-btn {
+  background-color: #28a745 !important;
+  color: white !important;
+  padding: 7px 12px;
+  border-radius: 6px;
+}
+.sale-export-btn:hover {
+  background-color: #218838 !important;
+}
+
+/* table */
+.sale-report-table-wrapper {
+  overflow-x: auto;
+}
+.sale-report-table th, .sale-report-table td {
+  padding: 10px;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+.sale-report-table th {
+  background-color: #f3f3f3;
+}
+.sale-report-table tr:hover {
+  background-color: #f9f9f9;
+}
+.sale-report-table .right {
+  text-align: right;
+}
+
+/* Compact dropdowns for sales filters */
+.sale-filters-left select,
+.sale-filters-right select {
+  padding: 5px 8px;     /* slightly smaller */
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  font-size: 13px;
+  min-width: 115px;     /* smaller default width */
+  cursor: pointer;
+}
+
+.sale-filters-left select:hover,
+.sale-filters-right select:hover {
+  border-color: #007bff;
+}
+
+.sale-filters-left input[type="date"] {
+  padding: 5px 8px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  font-size: 13px;
+  min-width: 130px;
+}
+
+.sale-filters-left input[type="date"]:hover {
+  border-color: #007bff;
+}
+
+
+/* ===============================
+   PROFIT & LOSS REPORT STYLING
+   =============================== */
+
+.profitloss-dashboard {
+  padding: 20px;
+  background: #fff;
+  border-radius: 10px;
+}
+
+/* === Header & Filters Layout === */
+.profitloss-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 15px;
+}
+
+/* Left filter group (branch, product, sort) */
+.profitloss-filters-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Right filter group (search + export) */
+.profitloss-filters-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Filter labels */
+.profitloss-header label {
+  font-weight: 500;
+  color: #333;
+}
+
+/* Select & input consistency */
+.profitloss-header select,
+.profitloss-header input[type="text"] {
+  padding: 7px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background-color: #fff;
+  font-size: 14px;
+  transition: border-color 0.2s ease;
+}
+
+/* Focus state */
+.profitloss-header select:focus,
+.profitloss-header input[type="text"]:focus {
+  border-color: #007bff;
+}
+
+/* Search bar width */
+.profitloss-filters-right input[type="text"] {
+  width: 200px;
+}
+
+/* Export button */
+.profitloss-export-btn {
+  background-color: #28a745 !important;
+  color: white !important;
+  padding: 7px 12px;
+  border-radius: 6px;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.profitloss-export-btn:hover {
+  background-color: #218838 !important;
+}
+
+/* === Table Layout === */
+.profitloss-table-wrapper {
+  overflow-x: auto;
+}
+
+/* Consistent table styling */
+.profitloss-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.profitloss-table th,
+.profitloss-table td {
+  padding: 10px;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+.profitloss-table th {
+  background-color: #f3f3f3;
+  font-weight: 600;
+}
+
+.profitloss-table tr:hover {
+  background-color: #f9f9f9;
+}
+
+.profitloss-table .right {
+  text-align: right;
+}
+
+/* === Profit/Loss Status Styling === */
+.pl-profit {
+  color: #28a745;
+  font-weight: bold;
+}
+
+.pl-loss {
+  color: #dc3545;
+  font-weight: bold;
+}
+
+/* Optional dot indicator (if needed later) */
+.pl-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+}
+
+.pl-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.pl-profit-dot {
+  background-color: #28a745;
+}
+
+.pl-loss-dot {
+  background-color: #dc3545;
+}

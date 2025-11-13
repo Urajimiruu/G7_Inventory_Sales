@@ -8,7 +8,12 @@ $sortOrder = $_GET['sort'] ?? 'ASC';
 $search = $_GET['search'] ?? '';
 
 // Base query
-$sql = "SELECT u.user_id, u.username, u.role, b.branch_name
+$sql = "SELECT 
+            u.user_id, 
+            u.username, 
+            u.role, 
+            u.phone_number,
+            b.branch_name
         FROM Users u
         LEFT JOIN Branches b ON u.branch_id = b.branch_id
         WHERE 1=1";
@@ -61,28 +66,29 @@ if ($result->num_rows > 0):
         <tr>
             <td><?= $counter++ ?></td>
             <td><?= htmlspecialchars($row['username']) ?></td>
-            <td><?= htmlspecialchars($row['role']) ?></td>
-            <td><?= htmlspecialchars($row['branch_name'] ?? 'N/A') ?></td>
+            <td><?= strtoupper(htmlspecialchars($row['role'])) ?></td>
+            <td><?= htmlspecialchars($row['phone_number']) ?></td>
+            <td><?= strtoupper(htmlspecialchars($row['branch_name'] ?? 'N/A')) ?></td>
+
             <td>
-                <!-- Edit button -->
                 <button type="button" class="btn btn-warning btn-sm"
                     onclick="openEditUserModal({
                         id: '<?= $row['user_id'] ?>',
                         username: '<?= htmlspecialchars($row['username']) ?>',
-                        phone: '<?= htmlspecialchars($row['phone'] ?? '') ?>',
+                        phone: '<?= htmlspecialchars($row['phone_number'] ?? '') ?>',
                         role: '<?= htmlspecialchars($row['role']) ?>',
                         branch: '<?= htmlspecialchars($row['branch_name'] ?? '') ?>'
                     })">
                     Edit
                 </button>
 
-                <!-- Delete button -->
                 <button type="button" class="btn btn-danger btn-sm"
                     onclick="deleteUser(<?= $row['user_id'] ?>)">
                     Delete
                 </button>
             </td>
         </tr>
+
 <?php
     endwhile;
 else:
