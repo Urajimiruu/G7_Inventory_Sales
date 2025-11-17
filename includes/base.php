@@ -15,6 +15,9 @@ if (!isset($_SESSION["otp_verified"]) || !$_SESSION["otp_verified"]) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="css/admin.css">
   <link rel="stylesheet" href="css/users.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
   <title><?= htmlspecialchars($title) ?></title>
 </head>
 <body>

@@ -542,3 +542,124 @@ body {
 .small-date {
   min-width: 130px !important;
 }
+
+canvas {
+  width: 100%;
+  max-width: 500px;
+  height: 300px;
+}
+
+/* .grid {
+  display: grid;
+  column-gap: 6.4rem;
+  row-gap: 9.6rem;
+} */
+
+.grid {
+  display: grid;
+  column-gap: 2.4rem;
+  row-gap: 9.6rem;
+}
+
+/* .grid:last-child {
+  margin-bottom: 0;
+} */
+
+.grid:not(:last-child) {
+  margin-bottom: 4.6rem;
+}
+
+.grid--2-cols {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.grid--3-cols {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.grid--4-cols {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+/* .grid--5-cols {
+  grid-template-columns: repeat(5, 1fr);
+} */
+
+.grid--center-v {
+  align-items: center;
+}
+
+
+/* Card styles */
+.feature {
+  background-color: #e9ebf7;        /* white card background */
+  padding: 2rem;                 /* inner spacing */
+  border-radius: 12px;           /* rounded corners */
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1); /* soft shadow */
+  text-align: center;            /* center content */
+  transition: transform 0.3s ease, box-shadow 0.3s ease; /* hover effect */
+}
+
+.feature:hover {
+  transform: translateY(-5px);   /* subtle lift */
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15); /* slightly stronger shadow */
+}
+
+
+/* Title & text */
+.feature-title {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  font-size: 1.2rem;
+}
+
+.feature-text {
+  color: #555;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* FOR GRAPHS */
+
+.graph {
+  background-color: #e9ebf7;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  width: 400px;
+}
+
+.graph:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.feature-icon {
+  color: #000000;
+  height: 3.2rem;
+  width: 3.2rem;
+  background-color: #d5d9eb;
+  margin-bottom: 3.2rem;
+  padding: 1.6rem;
+  border-radius: 50%;
+}
+
+
+
+/* BELOW 544PX PHONES  */
+@media (max-width: 34em) {
+  .grid {
+    row-gap: 4.8rem;
+  }
+
+  .grid--2-cols,
+  .grid--3-cols,
+  .grid--4-cols {
+    grid-template-columns: 1fr;
+  }
+  .sidebar {
+    width: 150px;
+  }
+}
