@@ -3,6 +3,7 @@ require_once "../db_connection.php";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $saleId = (int)($_POST['sale_id'] ?? 0);
+    $returnDate = date('Y-m-d'); // Current date when return is clicked
     
     if ($saleId > 0) {
         // Start transaction
@@ -23,9 +24,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $updateStmt->bind_param("iii", $sale['quantity'], $sale['product_id'], $sale['branch_id']);
                 $updateStmt->execute();
                 
-                // Update sale status to 'returned' instead of deleting
-                $updateSaleStmt = $conn->prepare("UPDATE sales SET status = 'returned' WHERE sale_id = ?");
-                $updateSaleStmt->bind_param("i", $saleId);
+                // Update sale status to 'returned' and set return date
+                $updateSaleStmt = $conn->prepare("UPDATE sales SET status = 'returned', return_date = ? WHERE sale_id = ?");
+                $updateSaleStmt->bind_param("si", $returnDate, $saleId);
                 
                 if ($updateSaleStmt->execute()) {
                     $conn->commit();

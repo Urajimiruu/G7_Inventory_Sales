@@ -2,7 +2,7 @@
 require_once "db_connection.php";
 
 if (!isset($_SESSION['user_id'])) {
-  header("Location: login.php");
+  header("Location: index.php");
   exit;
 }
 
@@ -42,6 +42,8 @@ if ($role === 'shop' && $branchId > 0) {
   $salesWhere = "WHERE s.branch_id = ? and s.status != 'returned'";
   $params[] = $branchId;
   $types .= "i";
+}else{
+   $salesWhere = "WHERE s.status != 'returned'";
 }
 
 $salesSql = "
@@ -61,12 +63,13 @@ $salesSql = "
   ORDER BY s.sale_date DESC, s.sale_id DESC
 ";
 
-if ($salesWhere) {
+if (!empty($params) && !empty($types)) {
   $stmtSales = $conn->prepare($salesSql);
   $stmtSales->bind_param($types, ...$params);
   $stmtSales->execute();
   $salesRes = $stmtSales->get_result();
 } else {
+  // No parameters, use regular query
   $salesRes = $conn->query($salesSql);
 }
 ?>

@@ -10,7 +10,7 @@
   <ul class="navbar">
     <li><a href="?page=home" class="<?= $current_page === 'home' ? 'active' : '' ?>">Home</a></li>
     <li><a href="?page=sales" class="<?= $current_page === 'sales' ? 'active' : '' ?>">Sales Transaction</a></li>
-
+    <li><a href="?page=returns" class="<?= $current_page === 'returns' ? 'active' : '' ?>">Returned Sales</a></li>
     <?php if ($role === 'admin' || $role === 'shop'): ?>
     <li class="dropdown <?= in_array($current_page, ['main_inventory', 'branch_inventory', 'stock_transfer']) ? 'open' : '' ?>">
       <button>
