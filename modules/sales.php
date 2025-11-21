@@ -39,7 +39,7 @@ $params = [];
 $types  = "";
 
 if ($role === 'shop' && $branchId > 0) {
-  $salesWhere = "WHERE s.branch_id = ?";
+  $salesWhere = "WHERE s.branch_id = ? and s.status != 'returned'";
   $params[] = $branchId;
   $types .= "i";
 }
@@ -50,6 +50,7 @@ $salesSql = "
     s.sale_date,
     s.quantity,
     p.product_name,
+    s.status,
     b.branch_name,
     p.selling_price,
     (s.quantity * p.selling_price) AS total
@@ -133,6 +134,7 @@ if ($salesWhere) {
               <!-- Edit/Delete/Return not wired yet; you can implement later -->
               <button type="button" class="btn btn-warning btn-sm" disabled>Edit</button>
               <button type="button" class="btn btn-danger btn-sm" disabled>Delete</button>
+              <button type="button" class="btn btn-primary btn-sm" onclick="returnSale(<?= $r['sale_id'] ?>)">Return</button>
             </td>
           </tr>
         <?php endwhile; ?>
@@ -255,6 +257,36 @@ function openSaleModal() {
 function closeSaleModal() {
   document.getElementById('saleModal').classList.remove('show');
   document.querySelector('.topbar')?.classList.remove('disabled');
+}
+// ---------- RETURN SALE FUNCTION ----------
+function returnSale(saleId) {
+  if (confirm('Are you sure you want to return this sale? This will update inventory and mark the sale as returned.')) {
+    const formData = new FormData();
+    formData.append('sale_id', saleId);
+    
+    fetch('modules/return_sale.php', {
+      method: 'POST',
+      body: formData
+    })
+      .then(r => r.text())
+      .then(text => {
+        console.log("Return sale response:", text);
+        let data;
+        try { data = JSON.parse(text); }
+        catch (e) { throw new Error("Not valid JSON: " + text); }
+
+        if (data.success) {
+          alert("Sale returned successfully!");
+          location.reload();
+        } else {
+          alert("Error: " + (data.message || "Failed to return sale."));
+        }
+      })
+      .catch(err => {
+        console.error("Return sale error:", err);
+        alert("Error returning sale. Check console for details.");
+      });
+  }
 }
 
 // ---------- ROW MANAGEMENT ----------
