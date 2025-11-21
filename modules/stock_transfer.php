@@ -9,106 +9,71 @@ $productsRes = $conn->query("
   ORDER BY product_name ASC
 ");
 
+// Load products again for modal (separate result set)
+$productsRes2 = $conn->query("
+  SELECT product_id, product_name
+  FROM products
+  ORDER BY product_name ASC
+");
+
+
 // Load branches
 $branchesRes = $conn->query("
   SELECT branch_id, branch_name
   FROM branches
   ORDER BY branch_name ASC
 ");
-
-// Optional: recent transfers to show in the table
-$transfersRes = $conn->query("
-  SELECT 
-    st.transfer_id,
-    p.product_name,
-    b.branch_name,
-    st.quantity,
-    st.transfer_date
-  FROM stocktransfers st
-  JOIN products p ON st.product_id = p.product_id
-  JOIN branches b ON st.branch_id = b.branch_id
-  ORDER BY st.transfer_date DESC, st.transfer_id DESC
-  LIMIT 50
-");
 ?>
 
 <div class="dashboard">
 
-  <!-- Filters (UI only for now) -->
+  <!-- 🔍 Filters -->
   <form id="filterForm" class="filter-form">
-    <div class="filters">
-      <div class="filter-left">
-        <label>Filter:</label>
-        <select name="filter1">
-          <option value=""></option>
-          <option value="Product">Product</option>
-          <option value="Branch">Branch</option>
-        </select>
+      <div class="filters">
+          <div class="filter-left">
 
-        <label>| From:</label>
-        <select name="fromBranch">
-          <option value=""></option>
-          <?php
-          $branchesRes2 = $conn->query("SELECT branch_id, branch_name FROM branches ORDER BY branch_name ASC");
-          while ($b = $branchesRes2->fetch_assoc()):
-          ?>
-            <option value="<?= (int)$b['branch_id'] ?>">
-              <?= htmlspecialchars($b['branch_name'], ENT_QUOTES, 'UTF-8') ?>
-            </option>
-          <?php endwhile; ?>
-        </select>
+              <label>Product:</label>
+              <select name="product_id" id="filterProduct" onchange="loadTransfers()">
+                  <option value="">All Products</option>
+                  <?php while ($p = $productsRes->fetch_assoc()): ?>
+                      <option value="<?= $p['product_id'] ?>">
+                          <?= htmlspecialchars($p['product_name']) ?>
+                      </option>
+                  <?php endwhile; ?>
+              </select>
 
-        <label>To:</label>
-        <select name="toBranch">
-          <option value=""></option>
-          <?php
-          $branchesRes3 = $conn->query("SELECT branch_id, branch_name FROM branches ORDER BY branch_name ASC");
-          while ($b = $branchesRes3->fetch_assoc()):
-          ?>
-            <option value="<?= (int)$b['branch_id'] ?>">
-              <?= htmlspecialchars($b['branch_name'], ENT_QUOTES, 'UTF-8') ?>
-            </option>
-          <?php endwhile; ?>
-        </select>
+              <label>From:</label>
+              <input type="date" name="from_date" onchange="loadTransfers()">
+
+              <label>To:</label>
+              <input type="date" name="to_date" onchange="loadTransfers()">
+
+          </div>
+
+          <div class="filter-right">
+              <button type="button" class="btn btn-primary" onclick="openTransferModal()">Transfer</button>
+          </div>
       </div>
-
-      <div class="filter-right">
-        <button type="button" class="btn btn-primary" onclick="openTransferModal()">
-          Transfer
-        </button>
-      </div>
-    </div>
   </form>
 
-  <!-- Recent transfers -->
+  <!-- 📋 Transfer Table -->
   <div class="table-scroll" role="region" aria-label="Products table">
-    <table class="vertical" aria-describedby="caption-vertical">
-      <thead>
-        <tr>
-          <th scope="col">Product</th>
-          <th scope="col" class="right">Quantity</th>
-          <th scope="col" class="right">Branch</th>
-          <th scope="col" class="right">Transfer Date</th>
-        </tr>
-      </thead>
-      <tbody>
-        <?php if ($transfersRes && $transfersRes->num_rows > 0): ?>
-          <?php while ($row = $transfersRes->fetch_assoc()): ?>
-            <tr>
-              <td><?= htmlspecialchars($row['product_name'], ENT_QUOTES, 'UTF-8') ?></td>
-              <td class="right"><?= (int)$row['quantity'] ?></td>
-              <td class="right"><?= htmlspecialchars($row['branch_name'], ENT_QUOTES, 'UTF-8') ?></td>
-              <td class="right"><?= htmlspecialchars($row['transfer_date'], ENT_QUOTES, 'UTF-8') ?></td>
-            </tr>
-          <?php endwhile; ?>
-        <?php else: ?>
-          <tr>
-            <td colspan="4" style="text-align:center;">No transfers yet.</td>
-          </tr>
-        <?php endif; ?>
-      </tbody>
-    </table>
+      <table class="vertical">
+          <thead>
+              <tr>
+                  <th>Product</th>
+                  <th class="right">Quantity</th>
+                  <th class="right">Branch</th>
+                  <th class="right">Transfer Date</th>
+              </tr>
+          </thead>
+
+          <tbody id="transferTableBody">
+              <!-- Loaded via AJAX -->
+          </tbody>
+      </table>
   </div>
+
 
   <!-- Transfer Modal -->
   <div id="transferModal" class="modal-overlay">
@@ -125,12 +90,12 @@ $transfersRes = $conn->query("
         <div class="form-row">
           <label>Product:</label>
           <select id="transferProduct" name="product_id" required>
-            <option value="">Select Product</option>
-            <?php while ($p = $productsRes->fetch_assoc()): ?>
-              <option value="<?= (int)$p['product_id'] ?>">
-                <?= htmlspecialchars($p['product_name'], ENT_QUOTES, 'UTF-8') ?>
-              </option>
-            <?php endwhile; ?>
+              <option value="">Select Product</option>
+              <?php while ($p = $productsRes2->fetch_assoc()): ?>
+                <option value="<?= (int)$p['product_id'] ?>">
+                  <?= htmlspecialchars($p['product_name'], ENT_QUOTES, 'UTF-8') ?>
+                </option>
+              <?php endwhile; ?>
           </select>
         </div>
 
@@ -167,93 +132,109 @@ $transfersRes = $conn->query("
 </div>
 
 <script>
-// open modal
-function openTransferModal() {
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById('transferDate').value = today;
 
-  document.getElementById('transferProduct').value = '';
-  document.getElementById('transferBranch').value = '';
-  document.getElementById('currentStock').value = '';
-  document.getElementById('transferQty').value = '';
+  function loadTransfers() {
+      const form = document.getElementById("filterForm");
+      const formData = new FormData(form);
+      const params = new URLSearchParams(formData);
 
-  document.getElementById('transferModal').classList.add('show');
-  document.querySelector('.topbar')?.classList.add('disabled');
-}
+      fetch("modules/list_stock_transfers.php?" + params.toString())
+          .then(res => res.text())
+          .then(html => {
+              document.querySelector("#transferTableBody").innerHTML = html;
+          });
+  }
+  
+  document.addEventListener("DOMContentLoaded", loadTransfers);
 
-function closeTransferModal() {
-  document.getElementById('transferModal').classList.remove('show');
-  document.querySelector('.topbar')?.classList.remove('disabled');
-}
+  // open modal
+  function openTransferModal() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('transferDate').value = today;
 
-// when product changes, fetch current stock from maininventory
-document.addEventListener('DOMContentLoaded', () => {
-  const productSelect = document.getElementById('transferProduct');
-  const stockInput = document.getElementById('currentStock');
+    document.getElementById('transferProduct').value = '';
+    document.getElementById('transferBranch').value = '';
+    document.getElementById('currentStock').value = '';
+    document.getElementById('transferQty').value = '';
 
-  productSelect.addEventListener('change', () => {
-    const productId = productSelect.value;
-    if (!productId) {
-      stockInput.value = '';
+    document.getElementById('transferModal').classList.add('show');
+    document.querySelector('.topbar')?.classList.add('disabled');
+  }
+
+  function closeTransferModal() {
+    document.getElementById('transferModal').classList.remove('show');
+    document.querySelector('.topbar')?.classList.remove('disabled');
+  }
+
+  // when product changes, fetch current stock from maininventory
+  document.addEventListener('DOMContentLoaded', () => {
+    const productSelect = document.getElementById('transferProduct');
+    const stockInput = document.getElementById('currentStock');
+
+    productSelect.addEventListener('change', () => {
+      const productId = productSelect.value;
+      if (!productId) {
+        stockInput.value = '';
+        return;
+      }
+
+      fetch('modules/get_main_stock.php?product_id=' + encodeURIComponent(productId))
+        .then(r => r.text())
+        .then(text => {
+          console.log('Stock response:', text);
+          let data;
+          try { data = JSON.parse(text); }
+          catch (e) { throw new Error('Invalid JSON: ' + text); }
+
+          stockInput.value = data.quantity ?? 0;
+        })
+        .catch(err => {
+          console.error('Stock fetch error:', err);
+          stockInput.value = 0;
+        });
+    });
+  });
+
+  // save transfer
+  function saveTransfer() {
+    const date   = document.getElementById('transferDate').value;
+    const prodId = document.getElementById('transferProduct').value;
+    const branch = document.getElementById('transferBranch').value;
+    const qty    = parseInt(document.getElementById('transferQty').value, 10);
+
+    if (!date || !prodId || !branch || isNaN(qty) || qty < 1) {
+      alert('Please fill out all fields with valid values.');
       return;
     }
 
-    fetch('modules/get_main_stock.php?product_id=' + encodeURIComponent(productId))
+    const formData = new FormData();
+    formData.append('product_id', prodId);
+    formData.append('branch_id', branch);
+    formData.append('quantity', qty);
+    formData.append('date', date);
+
+    fetch('modules/transfer_stock.php', {
+      method: 'POST',
+      body: formData
+    })
       .then(r => r.text())
       .then(text => {
-        console.log('Stock response:', text);
+        console.log('Raw transfer response:', text);
         let data;
         try { data = JSON.parse(text); }
-        catch (e) { throw new Error('Invalid JSON: ' + text); }
+        catch (e) { throw new Error('Not valid JSON: ' + text); }
 
-        stockInput.value = data.quantity ?? 0;
+        if (data.success) {
+          alert('Stock transferred successfully!');
+          location.reload();
+        } else {
+          alert('Transfer failed: ' + (data.message || 'Unknown error'));
+        }
       })
       .catch(err => {
-        console.error('Stock fetch error:', err);
-        stockInput.value = 0;
+        console.error('Transfer error:', err);
+        alert('Transfer failed. Check console for details.');
       });
-  });
-});
-
-// save transfer
-function saveTransfer() {
-  const date   = document.getElementById('transferDate').value;
-  const prodId = document.getElementById('transferProduct').value;
-  const branch = document.getElementById('transferBranch').value;
-  const qty    = parseInt(document.getElementById('transferQty').value, 10);
-
-  if (!date || !prodId || !branch || isNaN(qty) || qty < 1) {
-    alert('Please fill out all fields with valid values.');
-    return;
   }
 
-  const formData = new FormData();
-  formData.append('product_id', prodId);
-  formData.append('branch_id', branch);
-  formData.append('quantity', qty);
-  formData.append('date', date);
-
-  fetch('modules/transfer_stock.php', {
-    method: 'POST',
-    body: formData
-  })
-    .then(r => r.text())
-    .then(text => {
-      console.log('Raw transfer response:', text);
-      let data;
-      try { data = JSON.parse(text); }
-      catch (e) { throw new Error('Not valid JSON: ' + text); }
-
-      if (data.success) {
-        alert('Stock transferred successfully!');
-        location.reload();
-      } else {
-        alert('Transfer failed: ' + (data.message || 'Unknown error'));
-      }
-    })
-    .catch(err => {
-      console.error('Transfer error:', err);
-      alert('Transfer failed. Check console for details.');
-    });
-}
 </script>

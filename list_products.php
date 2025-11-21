@@ -33,8 +33,8 @@ while ($row = $result->fetch_assoc()):
     <td><?= htmlspecialchars($row['product_name']) ?></td>
     <td><?= htmlspecialchars($row['description']) ?></td>
     <td><?= htmlspecialchars($row['unit']) ?></td>
-    <td class="right"><?= number_format($row['cost_price'], 2) ?></td>
-    <td class="right"><?= number_format($row['selling_price'], 2) ?></td>
+    <td class="right">₱<?= number_format($row['cost_price'], 2) ?></td>
+    <td class="right">₱<?= number_format($row['selling_price'], 2) ?></td>
     <td>
         <button class="btn btn-warning btn-sm"
             onclick='openEditProductModal(<?= json_encode($row) ?>)'>

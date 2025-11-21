@@ -1,6 +1,6 @@
 .dashboard {
-  position: relative;
-  z-index: 1;
+  position: static !important;
+  z-index: auto !important;
   padding: 20px;
   background: #fff;
   border-radius: 10px;

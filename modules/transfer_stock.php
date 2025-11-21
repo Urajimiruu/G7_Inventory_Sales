@@ -13,7 +13,12 @@ if (!isset($_POST['product_id'], $_POST['branch_id'], $_POST['quantity'], $_POST
 $productId = (int) $_POST['product_id'];
 $branchId  = (int) $_POST['branch_id'];
 $qty       = (int) $_POST['quantity'];
-$date      = $_POST['date'];
+$date = $_POST['date']; // user selects only the date
+
+// add current server time
+$currentTime = date("H:i:s");
+$date = $date . " " . $currentTime;
+
 
 if ($productId <= 0 || $branchId <= 0 || $qty <= 0) {
     echo json_encode(['success' => false, 'message' => 'Invalid data values.']);
