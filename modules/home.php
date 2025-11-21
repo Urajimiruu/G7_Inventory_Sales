@@ -1,3 +1,114 @@
+<?php
+function getDashboardData($conn, $role, $branchId)
+{
+    // ---------- TOTAL PRODUCTS ----------
+    $sql = "SELECT COUNT(*) AS total FROM products";
+    $totalProducts = $conn->query($sql)->fetch_assoc()['total'];
+
+    // ---------- TOTAL SALES (QUANTITY) ----------
+    if ($role === "shop") {
+        $sql = "SELECT SUM(quantity) AS total FROM sales WHERE branch_id = $branchId";
+    } else {
+        $sql = "SELECT SUM(quantity) AS total FROM sales";
+    }
+    $totalSales = $conn->query($sql)->fetch_assoc()['total'] ?? 0;
+
+    // ---------- TOTAL BRANCHES ----------
+    $sql = "SELECT COUNT(*) AS total FROM branches";
+    $totalBranches = $conn->query($sql)->fetch_assoc()['total'];
+
+    // ---------- TOTAL USERS ----------
+    $sql = "SELECT COUNT(*) AS total FROM users";
+    $totalUsers = $conn->query($sql)->fetch_assoc()['total'];
+
+    // ---------- TOP 5 PRODUCTS SOLD ----------
+    $topLabels = [];
+    $topData   = [];
+
+    if ($role === "shop") {
+        $sql = "
+            SELECT p.product_name, SUM(s.quantity) AS qty
+            FROM sales s
+            JOIN products p ON p.product_id = s.product_id
+            WHERE s.branch_id = $branchId
+            GROUP BY s.product_id
+            ORDER BY qty DESC
+            LIMIT 5
+        ";
+    } else {
+        $sql = "
+            SELECT p.product_name, SUM(s.quantity) AS qty
+            FROM sales s
+            JOIN products p ON p.product_id = s.product_id
+            GROUP BY s.product_id
+            ORDER BY qty DESC
+            LIMIT 5
+        ";
+    }
+
+    $res = $conn->query($sql);
+    while ($row = $res->fetch_assoc()) {
+        $topLabels[] = $row['product_name'];
+        $topData[]   = (int)$row['qty'];
+    }
+
+    // ---------- MONTHLY SALES (LINE CHART) ----------
+    $lineLabels = [];
+    $lineData   = [];
+
+    if ($role === "shop") {
+        $sql = "
+            SELECT DATE_FORMAT(sale_date, '%b') AS month, SUM(quantity) AS total
+            FROM sales
+            WHERE branch_id = $branchId
+            GROUP BY MONTH(sale_date)
+            ORDER BY MONTH(sale_date)
+        ";
+    } else {
+        $sql = "
+            SELECT DATE_FORMAT(sale_date, '%b') AS month, SUM(quantity) AS total
+            FROM sales
+            GROUP BY MONTH(sale_date)
+            ORDER BY MONTH(sale_date)
+        ";
+    }
+
+    $res = $conn->query($sql);
+    while ($row = $res->fetch_assoc()) {
+        $lineLabels[] = $row['month'];
+        $lineData[]   = (int)$row['total'];
+    }
+
+    // ---------- RETURN EVERYTHING ----------
+    return [
+        'totalProducts' => $totalProducts,
+        'totalSales'    => $totalSales,
+        'totalBranches' => $totalBranches,
+        'totalUsers'    => $totalUsers,
+        'topLabels'     => $topLabels,
+        'topData'       => $topData,
+        'lineLabels'    => $lineLabels,
+        'lineData'      => $lineData
+    ];
+}
+
+require_once "db_connection.php";
+
+$data = getDashboardData($conn, $role, $branchId);
+
+// Extract values
+$totalProducts = $data['totalProducts'];
+$totalSales    = $data['totalSales'];
+$totalBranches = $data['totalBranches'];
+$totalUsers    = $data['totalUsers'];
+
+$topLabels     = $data['topLabels'];
+$topData       = $data['topData'];
+$lineLabels    = $data['lineLabels'];
+$lineData      = $data['lineData'];
+
+?>
+
 <div class="dashboard"> <!-- display sales data dito -->
 
 <div class="grid grid--4-cols">
@@ -70,31 +181,8 @@
   </script>
 
 </div>
-<div class="graph">
-<canvas id="myLineChart"></canvas>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-new Chart(document.getElementById('myLineChart').getContext('2d'), {
-    type: 'line',
-    data: {
-        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
-        datasets: [{
-            label: 'Sales',
-            data: [120, 150, 170, 140, 180, 200, 220],
-            borderColor: 'blue',
-            fill: false,
-            tension: 0.3
-        }]
-    },
-    options: {
-        responsive: false,
-        scales: {
-            y: { beginAtZero: true }
-        }
-    }
-});
 </script>
-</div>
+
 </div>
 
 </div>
