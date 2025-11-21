@@ -76,7 +76,7 @@ $branches = $conn->query("SELECT branch_id, branch_name FROM Branches ORDER BY b
 
       <div class="form-row">
         <label>Password:</label>
-        <input type="password" name="password" id="password" required>
+        <input type="password" name="password" id="password" placeholder="********">
       </div>
 
       <div class="form-row">

@@ -20,9 +20,49 @@ $response = ['success' => false, 'errors' => []];
 
 // Validation
 if (empty($username)) $response['errors'][] = "Username is required.";
-if (empty($phone_number)) $response['errors'][] = "Phone number is required.";
-elseif (!preg_match('/^\+63\s\d{3}\s\d{3}\s\d{4}$/', $phone_number)) //dko sure kung alin ang working sa otp
-    $response['errors'][] = "Invalid phone number format. Use +63 912 345 6789.";
+if (empty($phone_number)) {
+    $response['errors'][] = "Phone number is required.";
+} else {
+    // Phone number validation and formatting
+    // Remove any spaces, dashes, or other characters
+    $phone = preg_replace('/[^0-9+]/', '', $phone_number);
+    
+    // Check length and format
+    $phoneLength = strlen($phone);
+    
+    if ($phoneLength === 10) {
+        // 10-digit number (e.g., 9123456789)
+        if (substr($phone, 0, 1) === '9') {
+            // Format as +639123456789
+            $formattedPhone = '+63' . $phone;
+        } else {
+            $response['errors'][] = "Invalid phone number format. Example: 9123456789";
+        }
+    } elseif ($phoneLength === 11) {
+        // 11-digit number (e.g., 09123456789)
+        if (substr($phone, 0, 2) === '09') {
+            // Replace 09 with +63
+            $formattedPhone = '+63' . substr($phone, 1);
+        } else {
+            $response['errors'][] = "Invalid phone number format. Example: 09123456789";
+        }
+    } elseif ($phoneLength === 13 && substr($phone, 0, 3) === '+63') {
+        // Already in +63 format (e.g., +639123456789)
+        $formattedPhone = $phone;
+        // Remove the +63 to check if the remaining starts with 9
+        $remaining = substr($formattedPhone, 3);
+        if (substr($remaining, 0, 1) !== '9' || strlen($remaining) !== 10) {
+            $response['errors'][] = "Invalid phone number format. Example: +639123456789";
+        }
+    } else {
+        $response['errors'][] = "Invalid phone number format. Examples: 9123456789 or 09123456789";
+    }
+    
+    // If no errors, set the formatted phone number
+    if (empty($response['errors'])) {
+        $phone_number = $formattedPhone;
+    }
+}
 
 // Determine branch_id if role is shop
 $branch_id = null;
@@ -47,12 +87,12 @@ if (!empty($password)) {
     $stmt = $conn->prepare("UPDATE Users 
         SET username=?, password_hash=?, role=?, branch_id=?, phone_number=? 
         WHERE user_id=?");
-    $stmt->bind_param("sssdsi", $username, $password_hash, $role, $branch_id, $phone_number, $user_id);
+    $stmt->bind_param("sssssi", $username, $password_hash, $role, $branch_id, $phone_number, $user_id);
 } else {
     $stmt = $conn->prepare("UPDATE Users 
         SET username=?, role=?, branch_id=?, phone_number=? 
         WHERE user_id=?");
-    $stmt->bind_param("ssdsi", $username, $role, $branch_id, $phone_number, $user_id);
+    $stmt->bind_param("ssssi", $username, $role, $branch_id, $phone_number, $user_id);
 }
 
 if ($stmt->execute()) {

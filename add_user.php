@@ -18,17 +18,55 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     if ($password === "") $errors[] = "Password is required.";
     if ($role === "") $errors[] = "Role is required.";
 
+    // Phone number validation and formatting
     if ($phone === "") {
         $errors[] = "Phone number is required.";
-    } elseif (!preg_match('/^\+63\d{10}$/', $phone)) {
-        $errors[] = "Invalid phone number format. Must be +63 followed by 10 digits.";
+    } else {
+        // Remove any spaces, dashes, or other characters
+        $phone = preg_replace('/[^0-9+]/', '', $phone);
+        
+        // Check length and format
+        $phoneLength = strlen($phone);
+        
+        if ($phoneLength === 10) {
+            // 10-digit number (e.g., 9123456789)
+            if (substr($phone, 0, 1) === '9') {
+                // Format as +639123456789
+                $formattedPhone = '+63' . $phone;
+            } else {
+                $errors[] = "Invalid phone number format. Example: 9123456789";
+            }
+        } elseif ($phoneLength === 11) {
+            // 11-digit number (e.g., 09123456789)
+            if (substr($phone, 0, 2) === '09') {
+                // Replace 09 with +63
+                $formattedPhone = '+63' . substr($phone, 1);
+            } else {
+                $errors[] = "Invalid phone number format. Example: 09123456789";
+            }
+        } elseif ($phoneLength === 13 && substr($phone, 0, 3) === '+63') {
+            // Already in +63 format (e.g., +639123456789)
+            $formattedPhone = $phone;
+            // Remove the +63 to check if the remaining starts with 9
+            $remaining = substr($formattedPhone, 3);
+            if (substr($remaining, 0, 1) !== '9' || strlen($remaining) !== 10) {
+                $errors[] = "Invalid phone number format. Example: +639123456789";
+            }
+        } else {
+            $errors[] = "Invalid phone number format. Examples: 9123456789 or 09123456789";
+        }
+        
+        // If no errors, set the formatted phone number
+        if (!isset($errors[array_key_last($errors)]) || strpos($errors[array_key_last($errors)], "Invalid phone number") === false) {
+            $phone = $formattedPhone;
+        }
     }
 
     if ($role === "shop" && !$branch_id) {
         $errors[] = "Branch is required for shop role.";
     }
 
-    // Duplicate username
+    // Duplicate username only (phone number can be duplicate)
     if (empty($errors)) {
         $stmt = $conn->prepare("SELECT user_id FROM Users WHERE username = ?");
         $stmt->bind_param("s", $username);
@@ -75,3 +113,4 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 header('Content-Type: application/json');
 echo json_encode($response);
+?>
