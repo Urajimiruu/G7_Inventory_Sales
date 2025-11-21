@@ -39,9 +39,9 @@ $descriptions = [
   "report_sales" => "View detailed sales reports and filter any way you want.",
   "report_profitloss" => "View profit and loss summary per shop or date.",
   "report_inventory" => "Get current inventory status and valuation reports.",
-  "maintenance_products" => "Manage the products available in the inventory.",
-  "maintenance_branches" => "Manage branch details and settings.",
-  "maintenance_users" => "Manage user accounts and permissions.",
+  "maintenance_products" => "Manage and update all products listed in the inventory, including names, descriptions, pricing, and unit details.",
+  "maintenance_branches" => "Configure and maintain branch information, including branch profiles, operational settings, and related attributes.",
+  "maintenance_users" => "Oversee user accounts by adding, updating, or removing users, and assigning appropriate roles and access permissions.",
   "returns" => "Handle product returns and manage return records.",
 ];
 

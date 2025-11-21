@@ -312,7 +312,7 @@
 }
 
 .product-modal-overlay.show {
-  display: flex;
+  display: flex !important;
 }
 
 .product-modal-box {
@@ -354,6 +354,15 @@
   justify-content: center;
   gap: 10px;
 }
+
+.product-modal-box select {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background-color: #fff;
+}
+
 
 /* === Inventory Report === */
 .inv-report-dashboard {

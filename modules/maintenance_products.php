@@ -72,8 +72,22 @@ $unit = $conn->query("SELECT DISTINCT unit FROM Products");
 
       <div class="form-row">
         <label for="productUnit">Unit:</label>
-        <input type="text" id="productUnit" name="unit" placeholder="e.g., pcs, box, kg" required>
+        <select id="productUnit" name="unit" required>
+            <option value="">-- Select Unit --</option>
+            <option value="pcs">pcs</option>
+            <option value="box">box</option>
+            <option value="pack">pack</option>
+            <option value="pair">pair</option>
+            <option value="set">set</option>
+            <option value="kg">kg</option>
+            <option value="g">g</option>
+            <option value="mg">mg</option>
+            <option value="L">L</option>
+            <option value="mL">mL</option>
+            <option value="dozen">dozen</option>
+        </select>
       </div>
+
 
       <div class="form-row">
         <label for="costPrice">Cost Price:</label>

@@ -1,4 +1,13 @@
 <?php
+require_once "db_connection.php";
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+$role = $_SESSION['role'] ?? 'admin';
+$branchId = isset($_SESSION['branch_id']) ? (int)$_SESSION['branch_id'] : 0;
+
 function getDashboardData($conn, $role, $branchId)
 {
     // ---------- TOTAL PRODUCTS ----------
@@ -52,32 +61,39 @@ function getDashboardData($conn, $role, $branchId)
         $topData[]   = (int)$row['qty'];
     }
 
-    // ---------- MONTHLY SALES (LINE CHART) ----------
-    $lineLabels = [];
-    $lineData   = [];
+    // ---------- MONTHLY SALES (LINE CHART, 12-month normalized) ----------
+    $lineLabels = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    $lineData   = array_fill(0, 12, 0); // default 12 months with zeros
 
     if ($role === "shop") {
         $sql = "
-            SELECT DATE_FORMAT(sale_date, '%b') AS month, SUM(quantity) AS total
+            SELECT MONTH(sale_date) AS m, SUM(quantity) AS total
             FROM sales
             WHERE branch_id = $branchId
-            GROUP BY MONTH(sale_date)
-            ORDER BY MONTH(sale_date)
+            GROUP BY m
+            ORDER BY m
         ";
     } else {
         $sql = "
-            SELECT DATE_FORMAT(sale_date, '%b') AS month, SUM(quantity) AS total
+            SELECT MONTH(sale_date) AS m, SUM(quantity) AS total
             FROM sales
-            GROUP BY MONTH(sale_date)
-            ORDER BY MONTH(sale_date)
+            GROUP BY m
+            ORDER BY m
         ";
     }
 
     $res = $conn->query($sql);
-    while ($row = $res->fetch_assoc()) {
-        $lineLabels[] = $row['month'];
-        $lineData[]   = (int)$row['total'];
+
+    // Safety: ensure query executed
+    if ($res && $res->num_rows > 0) {
+        while ($row = $res->fetch_assoc()) {
+            $monthIndex = ((int)$row['m']) - 1; // 1→Jan, so use index 0
+            if ($monthIndex >= 0 && $monthIndex < 12) {
+                $lineData[$monthIndex] = (int)$row['total'];
+            }
+        }
     }
+
 
     // ---------- RETURN EVERYTHING ----------
     return [
@@ -111,78 +127,85 @@ $lineData      = $data['lineData'];
 
 <div class="dashboard"> <!-- display sales data dito -->
 
-<div class="grid grid--4-cols">
-          <div class="feature">
-            <ion-icon class="feature-icon" name="copy-outline"></ion-icon>
-            <p class="feature-title">Products Available</p>
-            <p class="feature-text">
-              9583
-            </p>
-          </div>
-          <div class="feature">
-            <ion-icon class="feature-icon" name="pricetag-outline"></ion-icon>
-            <p class="feature-title">Sales Made</p>
-            <p class="feature-text">
-              3534
-            </p>
-          </div>
-          <div class="feature">
-            <ion-icon class="feature-icon" name="storefront-outline"></ion-icon>
-            <p class="feature-title">Branches</p>
-            <p class="feature-text">
-              4
-            </p>
-          </div>
-          <div class="feature">
-            <ion-icon class="feature-icon" name="person-outline"></ion-icon>
-            <p class="feature-title">Users</p>
-            <p class="feature-text">
-              7
-            </p>
-          </div>
-        </div>
+  <div class="grid grid--4-cols">
+      <div class="feature">
+        <ion-icon class="feature-icon" name="copy-outline"></ion-icon>
+        <p class="feature-title">Products Available</p>
+        <p class="feature-text">
+          9583
+        </p>
+      </div>
+      <div class="feature">
+        <ion-icon class="feature-icon" name="pricetag-outline"></ion-icon>
+        <p class="feature-title">Sales Made</p>
+        <p class="feature-text">
+          3534
+        </p>
+      </div>
+      <div class="feature">
+        <ion-icon class="feature-icon" name="storefront-outline"></ion-icon>
+        <p class="feature-title">Branches</p>
+        <p class="feature-text">
+          4
+        </p>
+      </div>
+      <div class="feature">
+        <ion-icon class="feature-icon" name="person-outline"></ion-icon>
+        <p class="feature-title">Users</p>
+        <p class="feature-text">
+          7
+        </p>
+      </div>
+  </div>
 
 
-<div class="grid grid--2-cols">
+  <div class="grid grid--2-cols">
 
-<div class="graph">
-          <canvas id="salesChart"></canvas>
-  <script>
-    const ctx = document.getElementById('salesChart');
+    <div class="graph">
+              <canvas id="salesChart"></canvas>
 
-    new Chart(ctx, {
-      type: 'bar', // other options: 'line', 'pie', 'doughnut', etc.
-      data: {
-        labels: ['January', 'February', 'March', 'April', 'May'],
-        datasets: [{
-          label: 'Sales (₱)',
-          data: [1200, 1500, 1100, 1800, 1600],
-          backgroundColor: '#4e79a7',
-          borderRadius: 5
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { display: true },
-          title: {
-            display: true,
-            text: 'Monthly Sales Data'
-          }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: { stepSize: 500 }
-          }
-        }
-      }
-    });
-  </script>
+      <script>
+        
+          const salesCtx = document.getElementById('salesChart').getContext('2d');
 
-</div>
-</script>
+          const salesLabels = <?= json_encode($lineLabels) ?>;
+          const salesData   = <?= json_encode($lineData) ?>;
 
-</div>
+          new Chart(salesCtx, {
+              type: 'bar',
+              data: {
+                  labels: salesLabels,
+                  datasets: [{
+                      label: 'Monthly Sales (Qty Sold)',
+                      data: salesData,
+                      backgroundColor: '#4e79a7',
+                      borderRadius: 5
+                  }]
+              },
+              options: {
+                  responsive: true,
+                  plugins: {
+                      legend: { display: true },
+                      title: {
+                          display: true,
+                          text: 'Monthly Sales (12-Month Summary)'
+                      }
+                  },
+                  scales: {
+                      y: {
+                          beginAtZero: true,
+                          ticks: { precision: 0 }
+                      }
+                  }
+              }
+          });
+
+      </script>
+
+
+
+    </div>
+
+  </div>
 
 </div>

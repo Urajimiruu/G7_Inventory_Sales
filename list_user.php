@@ -23,7 +23,7 @@ if (!empty($roleFilter)) {
     $sql .= " AND u.role = ?";
 }
 if (!empty($branchFilter)) {
-    $sql .= " AND b.branch_name = ?";
+    $sql .= " AND b.branch_id = ?";
 }
 if (!empty($search)) {
     $sql .= " AND (u.username LIKE ? OR b.branch_name LIKE ?)";
