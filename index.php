@@ -20,77 +20,77 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $user = $result->fetch_assoc();
 
     if ($user && password_verify($password, $user["password_hash"])) {
-        $_SESSION["temp_user"] = $user;
-        $_SESSION["otp_verified"] = false;
+        // $_SESSION["temp_user"] = $user;
+        // $_SESSION["otp_verified"] = false;
 
-        // generate OTP
-        $otp = rand(100000, 999999);
-        $_SESSION["otp_code"] = $otp;
-        $_SESSION["otp_time"] = time();
-         // send via iprogtech
-        $apiToken = "8573678c1478276334450776eda448118427e2a1"; 
-        $url = "https://sms.iprogtech.com/api/v1/otp/send_otp";
+        // // generate OTP
+        // $otp = rand(100000, 999999);
+        // $_SESSION["otp_code"] = $otp;
+        // $_SESSION["otp_time"] = time();
+        //  // send via iprogtech
+        // $apiToken = "8573678c1478276334450776eda448118427e2a1"; 
+        // $url = "https://sms.iprogtech.com/api/v1/otp/send_otp";
 
-        // format phone number
-        $phone = $user["phone_number"];
-        $phone = str_replace(' ', '', $phone);
-        if (str_starts_with($phone, '0')) {
-            $phone = '+63' . substr($phone, 1);
-        }
+        // // format phone number
+        // $phone = $user["phone_number"];
+        // $phone = str_replace(' ', '', $phone);
+        // if (str_starts_with($phone, '0')) {
+        //     $phone = '+63' . substr($phone, 1);
+        // }
 
        
 
-        $message = "Your OTP is $otp";
+        // $message = "Your OTP is $otp";
 
-        $data = [
-            "api_token" => $apiToken,
-            "phone_number" => $phone,
-            "message" => "Your OTP code is :otp. It is valid for 5 minutes"
-        ];
+        // $data = [
+        //     "api_token" => $apiToken,
+        //     "phone_number" => $phone,
+        //     "message" => "Your OTP code is :otp. It is valid for 5 minutes"
+        // ];
 
-        $payload = json_encode($data);
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-Type: application/json"]);
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
+        // $payload = json_encode($data);
+        // $ch = curl_init($url);
+        // curl_setopt($ch, CURLOPT_POST, true);
+        // curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+        // curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        // curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-Type: application/json"]);
+        // $response = curl_exec($ch);
+        // $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        // curl_close($ch);
 
-        $resp = json_decode($response, true);
+        // $resp = json_decode($response, true);
 
-        if ($httpCode == 200) {
-            if (
-                (isset($resp["status"]) && ($resp["status"] == 200 || strtolower($resp["status"]) == "success")) ||
-                (isset($resp["message"]) && stripos($resp["message"], "OTP sent") !== false)
-            ) {
-                $_SESSION["otp_sent"] = true;
-                // echo "<pre>";
-                // echo "OTP Sent Successfully\n";
-                // echo "Phone: " . $phone . "\n";
-                // echo "Message: " . $message . "\n";
-                // echo "Response: " . htmlspecialchars(json_encode($resp, JSON_PRETTY_PRINT)) . "\n";
-                // echo "</pre>";
-                // exit;
-            } else {
-                $error = "OTP may have been sent, but API returned: " . htmlspecialchars(json_encode($resp));
-            }
-        } else {
-            $error = "Failed to send OTP. HTTP Code: " . $httpCode . " | Response: " . htmlspecialchars($response);
-        }
+        // if ($httpCode == 200) {
+        //     if (
+        //         (isset($resp["status"]) && ($resp["status"] == 200 || strtolower($resp["status"]) == "success")) ||
+        //         (isset($resp["message"]) && stripos($resp["message"], "OTP sent") !== false)
+        //     ) {
+        //         $_SESSION["otp_sent"] = true;
+        //         // echo "<pre>";
+        //         // echo "OTP Sent Successfully\n";
+        //         // echo "Phone: " . $phone . "\n";
+        //         // echo "Message: " . $message . "\n";
+        //         // echo "Response: " . htmlspecialchars(json_encode($resp, JSON_PRETTY_PRINT)) . "\n";
+        //         // echo "</pre>";
+        //         // exit;
+        //     } else {
+        //         $error = "OTP may have been sent, but API returned: " . htmlspecialchars(json_encode($resp));
+        //     }
+        // } else {
+        //     $error = "Failed to send OTP. HTTP Code: " . $httpCode . " | Response: " . htmlspecialchars($response);
+        // }
 
     //      // SKIP OTP VERIFICATION FOR TESTING
-    //      $_SESSION["temp_user"] = $user;
-    //     $_SESSION["otp_verified"] = false;
+         $_SESSION["temp_user"] = $user;
+        $_SESSION["otp_verified"] = false;
 
-    //     // Generate mock OTP
-    //     $otp = "123456"; 
-    //     $_SESSION["otp_code"] = $otp;
-    //     $_SESSION["otp_time"] = time();
+        // Generate mock OTP
+        $otp = "123456"; 
+        $_SESSION["otp_code"] = $otp;
+        $_SESSION["otp_time"] = time();
 
-    //     // Mock sending OTP (no API call)
-    //     $_SESSION["otp_sent"] = true;
+        // Mock sending OTP (no API call)
+        $_SESSION["otp_sent"] = true;
 
     } else {
         $error = "Invalid username or password!";
