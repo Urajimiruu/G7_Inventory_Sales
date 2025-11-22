@@ -19,10 +19,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($result->num_rows > 0) {
                 $sale = $result->fetch_assoc();
                 
-                // Update inventory (increase stock - return to inventory)
-                $updateStmt = $conn->prepare("UPDATE branchinventory SET quantity = quantity + ? WHERE product_id = ? AND branch_id = ?");
-                $updateStmt->bind_param("iii", $sale['quantity'], $sale['product_id'], $sale['branch_id']);
-                $updateStmt->execute();
+                // // Update inventory (increase stock - return to inventory)
+                // $updateStmt = $conn->prepare("UPDATE branchinventory SET quantity = quantity + ? WHERE product_id = ? AND branch_id = ?");
+                // $updateStmt->bind_param("iii", $sale['quantity'], $sale['product_id'], $sale['branch_id']);
+                // $updateStmt->execute();
                 
                 // Update sale status to 'returned' and set return date
                 $updateSaleStmt = $conn->prepare("UPDATE sales SET status = 'returned', return_date = ? WHERE sale_id = ?");
