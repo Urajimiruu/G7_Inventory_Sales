@@ -86,11 +86,11 @@ $branches = $conn->query("SELECT branch_id, branch_name FROM Branches ORDER BY b
         <tr>
           <th>Branch</th>
           <th>Product</th>
-          <th>Unit</th>
+          <th style="width: 150px;">Unit</th>
           <th class="right">Cost Price</th>
           <th class="right">Selling Price</th>
-          <th class="right">Quantity</th>
-          <th>Status</th>
+          <th class="right" style="width: 150px;">Quantity</th>
+          <th style="width: 150px;">Status</th>
         </tr>
       </thead>
       <tbody id="branchInventoryBody">

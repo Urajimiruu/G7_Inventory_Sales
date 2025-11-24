@@ -41,11 +41,11 @@
       <thead>
         <tr>
           <th>Product Name</th>
-          <th>Unit</th>
+          <th style="width: 150px;">Unit</th>
           <th class="right">Cost Price</th>
           <th class="right">Selling Price</th>
-          <th class="right">Quantity</th>
-          <th>Action</th>
+          <th class="right" style="width: 150px;">Quantity</th>
+          <th style="width: 150px;">Action</th>
         </tr>
       </thead>
 

@@ -38,13 +38,13 @@ $unit = $conn->query("SELECT DISTINCT unit FROM Products");
     <table class="vertical" aria-describedby="caption-vertical">
       <thead>
         <tr>
-          <th class="right">ID</th>
+          <th class="right" style="width: 100px;">ID</th>
           <th>Name</th>
           <th>Description</th>
           <th>Unit</th>
           <th class="right">Cost Price</th>
           <th class="right">Selling Price</th>
-          <th>Action</th>
+          <th style="width: 150px;">Action</th>
         </tr>
       </thead>
       <tbody id="productTableBody">

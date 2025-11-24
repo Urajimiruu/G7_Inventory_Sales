@@ -127,13 +127,13 @@
     <table class="vertical" aria-describedby="caption-vertical">
       <thead>
         <tr>
-          <th scope="col">Date</th>
+          <th scope="col" style="width: 200px;">Date</th>
           <th scope="col">Product</th>
           <th scope="col">Branch</th>
-          <th scope="col" class="right">Quantity</th>
+          <th scope="col" class="right" style="width: 150px;">Quantity</th>
           <th scope="col" class="right">Unit Price</th>
           <th scope="col" class="right">Total</th>
-          <th scope="col">Action</th>
+          <th scope="col" style="width: 225px;">Action</th>
         </tr>
       </thead>
 

@@ -62,9 +62,9 @@ $branchesRes = $conn->query("
           <thead>
               <tr>
                   <th>Product</th>
-                  <th class="right">Quantity</th>
+                  <th class="right" style="width: 200px;">Quantity</th>
                   <th class="right">Branch</th>
-                  <th class="right">Transfer Date</th>
+                  <th class="right" style="width: 200px;">Transfer Date</th>
               </tr>
           </thead>
 

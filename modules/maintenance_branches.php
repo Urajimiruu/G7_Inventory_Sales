@@ -21,10 +21,10 @@ require_once "db_connection.php";
     <table class="vertical" aria-describedby="caption-vertical">
       <thead>
         <tr>
-          <th class="right">ID</th>
+          <th class="right" style="width: 100px;">ID</th>
           <th>Name</th>
           <th>Location</th>
-          <th>Action</th>
+          <th style="width: 150px;">Action</th>
         </tr>
       </thead>
       <tbody id="branchTableBody">
