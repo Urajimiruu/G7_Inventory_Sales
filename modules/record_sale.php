@@ -12,15 +12,18 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-if (!isset($_POST['sale_date'], $_POST['branch_id'], $_POST['product_id'], $_POST['quantity'])) {
+// Check required parameters
+if (!isset($_POST['sale_date'], $_POST['branch_id'], $_POST['customer_type'], $_POST['product_id'])) {
     echo json_encode(['success' => false, 'message' => 'Missing parameters.']);
     exit;
 }
 
-$saleDate   = $_POST['sale_date'];
-$branchId   = (int)$_POST['branch_id'];
-$productIds = $_POST['product_id'];
-$quantities = $_POST['quantity'];
+$saleDate     = $_POST['sale_date'];
+$branchId     = (int)$_POST['branch_id'];
+$customerType = $_POST['customer_type'];
+$productIds   = $_POST['product_id'];
+$quantities   = $_POST['quantity'];
+$unitPrices   = $_POST['unit_price']; // Original unit prices from products
 
 if ($branchId <= 0) {
     echo json_encode(['success' => false, 'message' => 'Invalid branch.']);
@@ -31,8 +34,8 @@ $conn->begin_transaction();
 
 try {
     $insertSql = "
-        INSERT INTO sales (branch_id, product_id, sale_date, quantity)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO sales (branch_id, product_id, sale_date, quantity, unit_price, customer_type)
+        VALUES (?, ?, ?, ?, ?, ?)
     ";
     $insertStmt = $conn->prepare($insertSql);
 
@@ -49,8 +52,15 @@ try {
     for ($i = 0; $i < count($productIds); $i++) {
         $pid = (int)$productIds[$i];
         $qty = (int)$quantities[$i];
+        $originalUnitPrice = (float)$unitPrices[$i];
 
         if ($pid <= 0 || $qty <= 0) continue;
+
+        // Apply discount based on customer type
+        $finalUnitPrice = $originalUnitPrice;
+        if ($customerType === 'Senior' || $customerType === 'PWD') {
+            $finalUnitPrice = $originalUnitPrice * 0.8; // 20% discount
+        }
 
         // Get old quantity (lock row)
         $qtySql = "SELECT quantity FROM branchinventory WHERE branch_id = ? AND product_id = ? FOR UPDATE";
@@ -70,11 +80,11 @@ try {
             throw new Exception("Not enough stock for product ID $pid.");
         }
 
-        // Insert sale
-        $insertStmt->bind_param("iisi", $branchId, $pid, $saleDate, $qty);
+        // Insert sale with final unit price (discounted if applicable)
+        $insertStmt->bind_param("iisids", $branchId, $pid, $saleDate, $qty, $finalUnitPrice, $customerType);
         $insertStmt->execute();
 
-        // Record for notification (don’t send email yet)
+        // Record for notification (don't send email yet)
         $notifications[] = [
             'branchId' => $branchId,
             'productId' => $pid,
@@ -93,11 +103,15 @@ try {
         }
     }
 
-    echo json_encode(['success' => true]);
+    echo json_encode(['success' => true, 'message' => 'Sale recorded successfully!']);
 
 } catch (Exception $e) {
     $conn->rollback();
     echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 }
 
+// Close statements if they exist
+if (isset($insertStmt)) $insertStmt->close();
+if (isset($invStmt)) $invStmt->close();
 $conn->close();
+?>

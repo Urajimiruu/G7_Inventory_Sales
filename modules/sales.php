@@ -39,7 +39,6 @@
   }
 
   // Load existing sales list for table
-  //   One row = one product sold
   $salesWhere = "";
   $params = [];
   $types  = "";
@@ -60,8 +59,9 @@
       p.product_name,
       s.status,
       b.branch_name,
-      p.selling_price,
-      (s.quantity * p.selling_price) AS total
+      s.unit_price,
+      s.customer_type,
+      (s.quantity * s.unit_price) AS line_total
     FROM sales s
     JOIN products p ON s.product_id = p.product_id
     JOIN branches b ON s.branch_id = b.branch_id
@@ -75,7 +75,6 @@
     $stmtSales->execute();
     $salesRes = $stmtSales->get_result();
   } else {
-    // No parameters, use regular query
     $salesRes = $conn->query($salesSql);
   }
 ?>
@@ -121,7 +120,6 @@
     </div>
   </form>
 
-
   <!-- Sales table -->
   <div class="table-scroll" role="region" aria-label="Sales table">
     <table class="vertical" aria-describedby="caption-vertical">
@@ -132,23 +130,20 @@
           <th scope="col">Branch</th>
           <th scope="col" class="right" style="width: 150px;">Quantity</th>
           <th scope="col" class="right">Unit Price</th>
-          <th scope="col" class="right">Total</th>
+          
+          <th scope="col" class="right">Line Total</th>
+          <th scope="col">Customer Type</th>
           <th scope="col" style="width: 225px;">Action</th>
         </tr>
       </thead>
 
       <tbody id="salesTableBody">
           <!-- Filled by AJAX -->
-
       </tbody>
     </table>
   </div>
 
-  <?php
-
-  ?>
-
-  <!-- Record Sale Modal (multi-item POS) -->
+  <!-- Record Sale Modal -->
   <div id="saleModal" class="modal-overlay">
     <div class="modal-box">
       <h4 id="saleModalTitle">RECORD SALE</h4>
@@ -169,6 +164,15 @@
                 <?= htmlspecialchars($b['branch_name'], ENT_QUOTES, 'UTF-8') ?>
               </option>
             <?php endforeach; ?>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label for="customerType">Customer Type:</label>
+          <select id="customerType" name="customer_type" required>
+            <option value="Regular" selected>Regular</option>
+            <option value="Senior">Senior</option>
+            <option value="PWD">PWD</option>
           </select>
         </div>
 
@@ -246,6 +250,15 @@
           <input type="number" id="editSaleQty" name="quantity" min="1" required>
         </div>
 
+        <div class="form-row">
+          <label for="editCustomerType">Customer Type:</label>
+          <select id="editCustomerType" name="customer_type" required>
+            <option value="Regular">Regular</option>
+            <option value="Senior">Senior</option>
+            <option value="PWD">PWD</option>
+          </select>
+        </div>
+
         <div class="modal-buttons">
           <button type="button" class="btn btn-primary" onclick="submitEditSale()">Save changes</button>
           <button type="button" class="btn btn-danger" onclick="closeEditSaleModal()">Cancel</button>
@@ -253,7 +266,6 @@
       </form>
     </div>
   </div>
-
 
 </div>
 
@@ -274,12 +286,54 @@
   const USER_BRANCH_ID = <?= (int)$branchId ?>;
   const USER_ROLE = "<?= $role ?>";
 
+  // ---------- DISCOUNT CALCULATION ----------
+  function calculateDiscountedPrice(unitPrice, quantity, customerType) {
+    const subtotal = unitPrice * quantity;
+    if (customerType === 'Senior' || customerType === 'PWD') {
+      return subtotal * 0.8; // 20% discount
+    }
+    return subtotal;
+  }
+
+  function getDiscountedUnitPrice(originalPrice, customerType) {
+    if (customerType === 'Senior' || customerType === 'PWD') {
+      return originalPrice * 0.8; // 20% discount on unit price
+    }
+    return originalPrice;
+  }
+
+  function updateRowTotal(row) {
+    const price = parseFloat(row.querySelector('input[name="unit_price[]"]').value || '0');
+    const qty   = parseInt(row.querySelector('.qty-input').value || '0', 10);
+    const customerType = document.getElementById('customerType').value;
+    
+    const discountedPrice = getDiscountedUnitPrice(price, customerType);
+    const total = calculateDiscountedPrice(price, qty, customerType);
+    
+    row.querySelector('.unit-price').textContent = discountedPrice.toFixed(2);
+    row.querySelector('.line-total').textContent = total.toFixed(2);
+  }
+
+  function updateSaleTotals() {
+    let grand = 0;
+    const customerType = document.getElementById('customerType').value;
+    
+    document.querySelectorAll('#saleItemsBody tr').forEach(row => {
+      const price = parseFloat(row.querySelector('input[name="unit_price[]"]').value || '0');
+      const qty   = parseInt(row.querySelector('.qty-input').value || '0', 10);
+      grand += calculateDiscountedPrice(price, qty, customerType);
+    });
+    
+    document.getElementById('saleGrandTotal').textContent = grand.toFixed(2);
+  }
+
   // ---------- MODAL OPEN/CLOSE ----------
   function openSaleModal() {
     document.getElementById('saleForm').reset();
 
     // default date = today
     document.getElementById('saleDate').value = new Date().toISOString().split('T')[0];
+    document.getElementById('customerType').value = 'Regular';
 
     // if shop role, ensure branch select is set correctly
     if (USER_ROLE === 'shop' && USER_BRANCH_ID > 0) {
@@ -302,6 +356,7 @@
     document.getElementById('saleModal').classList.remove('show');
     document.querySelector('.topbar')?.classList.remove('disabled');
   }
+
   // ---------- RETURN SALE FUNCTION ----------
   function returnSale(saleId) {
     if (confirm('Are you sure you want to return this sale? This will mark the sale as returned.')) {
@@ -386,7 +441,7 @@
       const opt = select.selectedOptions[0];
       const price = parseFloat(opt?.getAttribute('data-price') || '0');
 
-      row.querySelector('.unit-price').textContent = price.toFixed(2);
+      // Store the original price (not discounted)
       row.querySelector('input[name="unit_price[]"]').value = price.toFixed(2);
 
       updateRowTotal(row);
@@ -401,23 +456,6 @@
       updateRowTotal(row);
       updateSaleTotals();
     });
-  }
-
-  function updateRowTotal(row) {
-    const price = parseFloat(row.querySelector('input[name="unit_price[]"]').value || '0');
-    const qty   = parseInt(row.querySelector('.qty-input').value || '0', 10);
-    const total = price * qty;
-    row.querySelector('.line-total').textContent = total.toFixed(2);
-  }
-
-  function updateSaleTotals() {
-    let grand = 0;
-    document.querySelectorAll('#saleItemsBody tr').forEach(row => {
-      const price = parseFloat(row.querySelector('input[name="unit_price[]"]').value || '0');
-      const qty   = parseInt(row.querySelector('.qty-input').value || '0', 10);
-      grand += price * qty;
-    });
-    document.getElementById('saleGrandTotal').textContent = grand.toFixed(2);
   }
 
   // ---------- EDIT / DELETE SALE JS ----------
@@ -436,6 +474,7 @@
         document.getElementById('editSaleDate').value = sale.sale_date;
         document.getElementById('editSaleProduct').value = sale.product_id;
         document.getElementById('editSaleQty').value = sale.quantity;
+        document.getElementById('editCustomerType').value = sale.customer_type;
 
         // If user is shop, lock branch to user's branch
         if (USER_ROLE === 'shop') {
@@ -467,8 +506,9 @@
     const branchId = document.getElementById('editSaleBranch').value;
     const productId = document.getElementById('editSaleProduct').value;
     const qty = parseInt(document.getElementById('editSaleQty').value, 10);
+    const customerType = document.getElementById('editCustomerType').value;
 
-    if (!saleId || !saleDate || !branchId || !productId || !qty || qty < 1) {
+    if (!saleId || !saleDate || !branchId || !productId || !qty || qty < 1 || !customerType) {
       alert('Please fill out all fields correctly.');
       return;
     }
@@ -479,6 +519,7 @@
     formData.append('branch_id', branchId);
     formData.append('product_id', productId);
     formData.append('quantity', qty);
+    formData.append('customer_type', customerType);
 
     fetch('modules/edit_sale.php', {
       method: 'POST',
@@ -529,17 +570,17 @@
       });
   }
 
-
   // ---------- SAVE SALE (AJAX to record_sale.php) ----------
   function saveSale() {
     const saleDate = document.getElementById('saleDate').value;
     const branchSelect = document.getElementById('saleBranch');
+    const customerType = document.getElementById('customerType').value;
     const branchId = (USER_ROLE === 'shop' && USER_BRANCH_ID > 0)
       ? USER_BRANCH_ID
       : branchSelect.value;
 
-    if (!saleDate || !branchId) {
-      alert("Please select date and branch.");
+    if (!saleDate || !branchId || !customerType) {
+      alert("Please select date, branch, and customer type.");
       return;
     }
 
@@ -552,6 +593,7 @@
     const formData = new FormData();
     formData.append('sale_date', saleDate);
     formData.append('branch_id', branchId);
+    formData.append('customer_type', customerType);
 
     rows.forEach(row => {
       const productId = row.querySelector('.product-select').value;
@@ -607,6 +649,19 @@
           });
   }
 
-  document.addEventListener("DOMContentLoaded", loadSales);
+  // Add event listener for customer type change
+  document.addEventListener('DOMContentLoaded', function() {
+    const customerTypeSelect = document.getElementById('customerType');
+    if (customerTypeSelect) {
+      customerTypeSelect.addEventListener('change', function() {
+        // Update all row totals when customer type changes
+        document.querySelectorAll('#saleItemsBody tr').forEach(row => {
+          updateRowTotal(row);
+        });
+        updateSaleTotals();
+      });
+    }
+    loadSales();
+  });
 
 </script>
