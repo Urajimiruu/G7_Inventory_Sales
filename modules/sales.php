@@ -637,17 +637,18 @@
       });
   }
 
-  function loadSales() {
-      const form = document.getElementById("filterForm");
-      const formData = new FormData(form);
-      const params = new URLSearchParams(formData);
+  function loadSales(page = 1) {
+    const form = document.getElementById("filterForm");
+    const formData = new FormData(form);
+    formData.append('page', page);
+    const params = new URLSearchParams(formData);
 
-      fetch("modules/list_sales.php?" + params.toString())
-          .then(res => res.text())
-          .then(html => {
-              document.getElementById("salesTableBody").innerHTML = html;
-          });
-  }
+    fetch("modules/list_sales.php?" + params.toString())
+        .then(res => res.text())
+        .then(html => {
+            document.getElementById("salesTableBody").innerHTML = html;
+        });
+}
 
   // Add event listener for customer type change
   document.addEventListener('DOMContentLoaded', function() {

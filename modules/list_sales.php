@@ -10,7 +10,7 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-$role = strtolower($_SESSION['role']);
+$role = strtolower($_SESSION['role'] ?? '');
 $branchId = (int)($_SESSION['branch_id'] ?? 0);
 
 $productId = $_GET['product_id'] ?? '';
@@ -18,6 +18,12 @@ $filterBranch = $_GET['branch_id'] ?? '';
 $fromDate = $_GET['from_date'] ?? '';
 $toDate = $_GET['to_date'] ?? '';
 
+// Pagination
+$page = max(1, (int)($_GET['page'] ?? 1));
+$limit = 50; // items per page
+$offset = ($page - 1) * $limit;
+
+// Base SQL
 $sql = "
     SELECT 
         s.sale_id,
@@ -71,14 +77,23 @@ if ($toDate !== "") {
     $types   .= "s";
 }
 
-$sql .= " ORDER BY s.sale_date DESC, s.sale_id DESC";
+// ---------------- COUNT TOTAL ----------------
+$countSql = "SELECT COUNT(*) FROM ($sql) AS temp";
+$countStmt = $conn->prepare($countSql);
+if (!empty($params)) $countStmt->bind_param($types, ...$params);
+$countStmt->execute();
+$totalItems = $countStmt->get_result()->fetch_row()[0];
+$totalPages = ceil($totalItems / $limit);
+$countStmt->close();
+
+// ---------------- ADD ORDER AND LIMIT ----------------
+$sql .= " ORDER BY s.sale_date DESC, s.sale_id DESC LIMIT ?, ?";
+$params[] = $offset;
+$params[] = $limit;
+$types .= "ii";
 
 $stmt = $conn->prepare($sql);
-
-if (!empty($params)) {
-    $stmt->bind_param($types, ...$params);
-}
-
+$stmt->bind_param($types, ...$params);
 $stmt->execute();
 $res = $stmt->get_result();
 
@@ -99,7 +114,6 @@ while ($r = $res->fetch_assoc()) {
         <td class='right'>{$r['quantity']}</td>
         <td class='right'>";
     
-    // Show unit price with discount indication
     if ($hasDiscount) {
         echo "<span style='text-decoration: line-through; color: #999; font-size: 0.9em;'>₱" . number_format($originalUnitPrice, 2) . "</span><br>
               <span style='color: #e74c3c; font-weight: bold;'>₱" . number_format($r['unit_price'], 2) . "</span>";
@@ -111,7 +125,6 @@ while ($r = $res->fetch_assoc()) {
         <td class='right'>₱" . number_format($r['line_total'], 2) . "</td>
         <td>";
     
-    // Display customer type with color coding
     switch ($r['customer_type']) {
         case 'Senior':
             echo "<span style='color: #e67e22; font-weight: bold;'>Senior</span>";
@@ -132,5 +145,41 @@ while ($r = $res->fetch_assoc()) {
     </tr>";
 }
 
-$stmt->close();
+// ---------------- PAGINATION ----------------
+echo "<tr><td colspan='8' style='text-align:center;'>";
+
+if ($totalPages > 1) {
+    // Prev button
+    if ($page > 1) {
+        echo "<button class='btn btn-primary' onclick='loadSales(".($page-1).")'>Prev</button> ";
+    }
+
+    // Numbered buttons (windowed)
+    $windowSize = 2; // show 2 pages before and after current
+    $start = max(1, $page - $windowSize);
+    $end   = min($totalPages, $page + $windowSize);
+
+    if ($start > 1) {
+        echo "<button class='btn btn-primary' onclick='loadSales(1)'>1</button> ";
+        if ($start > 2) echo "<span>...</span> ";
+    }
+
+    for ($i = $start; $i <= $end; $i++) {
+        $btnClass = ($i === $page) ? "btn btn-warning" : "btn btn-primary";
+        echo "<button class='$btnClass' onclick='loadSales($i)'>$i</button> ";
+    }
+
+    if ($end < $totalPages) {
+        if ($end < $totalPages - 1) echo "<span>...</span> ";
+        echo "<button class='btn btn-primary' onclick='loadSales($totalPages)'>$totalPages</button> ";
+    }
+
+    // Next button
+    if ($page < $totalPages) {
+        echo "<button class='btn btn-primary' onclick='loadSales(".($page+1).")'>Next</button>";
+    }
+}
+
+echo "</td></tr>";
+
 ?>
