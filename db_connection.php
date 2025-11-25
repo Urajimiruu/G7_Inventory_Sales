@@ -1,8 +1,8 @@
 <?php
-$servername = "localhost";  // or 127.0.0.1
-$username   = "root";
-$password   = "Vladimir#1124";
-$dbname     = "SalesAndInventory";
+$servername = "mysql1001.site4now.net";  // or 127.0.0.1
+$username   = "ab998d_sales";
+$password   = "p@ssw0rd";
+$dbname     = "db_ab998d_sales";
 
 // Create connection
 $conn = new mysqli($servername, $username, $password, $dbname);

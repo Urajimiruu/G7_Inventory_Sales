@@ -82,7 +82,7 @@ $returnsSql = "
   JOIN products p ON s.product_id = p.product_id
   JOIN branches b ON s.branch_id = b.branch_id
   $returnsWhere
-  ORDER BY s.return_date DESC, s.sale_id DESC
+  ORDER BY s.return_date desc
 ";
 
 if ($params) {
