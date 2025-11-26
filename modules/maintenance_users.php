@@ -117,12 +117,14 @@ $branches = $conn->query("SELECT branch_id, branch_name FROM Branches ORDER BY b
 <script>
 let currentUserId = null;
 
-function loadTable() {
+function loadTable(page = 1) {
     const form = document.getElementById('filterForm');
     const formData = new FormData(form);
 
+    formData.append('sort', document.getElementById('sort').value);
+    formData.append('page', page);
+
     const params = new URLSearchParams(formData);
-    params.append('sort', document.getElementById('sort').value);
 
     fetch("list_user.php?" + params.toString())
         .then(response => response.text())
@@ -130,6 +132,7 @@ function loadTable() {
             document.getElementById("userTableBody").innerHTML = data;
         });
 }
+
 
 
 // --- Open modal for adding a user ---

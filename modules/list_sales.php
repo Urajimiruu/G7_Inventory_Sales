@@ -160,7 +160,7 @@ if ($totalPages > 1) {
     $end   = min($totalPages, $page + $windowSize);
 
     if ($start > 1) {
-        echo "<button class='btn btn-primary' onclick='loadSales(1)'>1</button> ";
+        echo "<button class='btn btn-secondary' onclick='loadSales(1)'>1</button> ";
         if ($start > 2) echo "<span>...</span> ";
     }
 
@@ -171,7 +171,7 @@ if ($totalPages > 1) {
 
     if ($end < $totalPages) {
         if ($end < $totalPages - 1) echo "<span>...</span> ";
-        echo "<button class='btn btn-primary' onclick='loadSales($totalPages)'>$totalPages</button> ";
+        echo "<button class='btn btn-secondary' onclick='loadSales($totalPages)'>$totalPages</button> ";
     }
 
     // Next button

@@ -22,6 +22,9 @@ $unit      = $_GET['unit'] ?? '';
 $branchId  = $_GET['branch_id'] ?? '';
 $sort      = $_GET['sort'] ?? 'ASC';
 $search    = $_GET['search'] ?? '';
+$page   = max(1, (int)($_GET['page'] ?? 1));
+$limit  = 50; // items per page
+$offset = ($page - 1) * $limit;
 
 $sql = "
 SELECT 
@@ -78,13 +81,26 @@ if ($search !== '') {
 }
 
 /* Sorting */
-$sql .= " ORDER BY bi.quantity $sort, p.product_name ASC ";
+
+$countSql = "SELECT COUNT(*) FROM ($sql) AS temp";
+$countStmt = $conn->prepare($countSql);
+if (!empty($params)) $countStmt->bind_param($types, ...$params);
+$countStmt->execute();
+$totalItems = $countStmt->get_result()->fetch_row()[0];
+$totalPages = ceil($totalItems / $limit);
+
+/* Add ordering and limit */
+$sql .= " ORDER BY quantity $sort, p.product_name ASC LIMIT ?, ?";
+$types .= "ii";
+$params[] = $offset;
+$params[] = $limit;
+
 
 $stmt = $conn->prepare($sql);
 
-if (!empty($params)) {
-    $stmt->bind_param($types, ...$params);
-}
+
+$stmt->bind_param($types, ...$params);
+
 
 $stmt->execute();
 $result = $stmt->get_result();
@@ -98,7 +114,6 @@ while ($row = $result->fetch_assoc()) {
 
     $qty = (int)$row['quantity'];
 
-    // Status
     if ($qty === 0) {
         $statusText = "No Stock";
         $statusClass = "no-stock";
@@ -121,4 +136,49 @@ while ($row = $result->fetch_assoc()) {
         <td><span class='status $statusClass'><span class='dot'></span>$statusText</span></td>
     </tr>
     ";
-}
+}  // END WHILE
+?>
+
+<tr>
+    <td colspan="6" style="text-align:center;">
+        <?php if ($totalPages > 1): ?>
+            <div class="pagination">
+
+                <!-- Prev -->
+                <?php if ($page > 1): ?>
+                    <button class="btn btn-primary" onclick="loadBranchInventory(<?= $page - 1 ?>)">Prev</button>
+                <?php endif; ?>
+
+                <?php
+                $windowSize = 2;
+                $start = max(1, $page - $windowSize);
+                $end   = min($totalPages, $page + $windowSize);
+
+                if ($start > 1) {
+                    echo '<button class="btn btn-secondary" onclick="loadBranchInventory(1)">1</button>';
+                    if ($start > 2) echo '<span>...</span>';
+                }
+
+                for ($i = $start; $i <= $end; $i++):
+                ?>
+                    <button 
+                        class="btn <?= ($i === $page) ? 'btn-warning' : 'btn-primary' ?>" 
+                        onclick="loadBranchInventory(<?= $i ?>)">
+                        <?= $i ?>
+                    </button>
+                <?php endfor; ?>
+
+                <?php if ($end < $totalPages): ?>
+                    <?php if ($end < $totalPages - 1) echo '<span>...</span>'; ?>
+                    <button class="btn btn-secondary" onclick="loadBranchInventory(<?= $totalPages ?>)"><?= $totalPages ?></button>
+                <?php endif; ?>
+
+                <!-- Next -->
+                <?php if ($page < $totalPages): ?>
+                    <button class="btn btn-primary" onclick="loadBranchInventory(<?= $page + 1 ?>)">Next</button>
+                <?php endif; ?>
+
+            </div>
+        <?php endif; ?>
+    </td>
+</tr>

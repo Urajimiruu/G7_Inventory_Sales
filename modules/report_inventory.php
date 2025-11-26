@@ -83,7 +83,11 @@ $branchId = (int)($_SESSION['branch_id'] ?? 0);
 </div>
 
 <script>
-function loadInventory() {
+    let currentProfitPage = 1;
+    const profitLimit = 50; // change this if you want more rows per page
+function loadInventory(page = 1) {
+    currentProfitPage = page;
+
     const search  = document.getElementById('invSearch').value.trim();
     const branch  = document.getElementById('filterBranch').value;
     const product = document.getElementById('filterProduct').value;
@@ -93,19 +97,21 @@ function loadInventory() {
         search: search,
         branch: branch,
         product: product,
-        sort: sort
+        sort: sort,
+        page: page,
+        limit: profitLimit
     });
 
     fetch('fetch_inventory_report.php?' + params.toString())
         .then(res => res.text())
-        .then(html => {
-            document.getElementById('invReportBody').innerHTML = html;
+        .then(response => {
+            // response contains TABLE + PAGINATION (split by delimiter)
+            const [tableRows, paginationHtml] = response.split("<!--PAGINATION-->");
+            document.getElementById('invReportBody').innerHTML = tableRows;
+            document.getElementById('invReportPagination').innerHTML = paginationHtml;
         });
 }
 
-
-// Initial load
-loadInventory();
 
 // Placeholder for export logic
 function exportInventory() {
@@ -124,4 +130,6 @@ function exportInventory() {
     // Open export in new tab
     window.open('export_inventory_excel.php?' + params.toString(), '_blank');
 }
+
+loadInventory();
 </script>

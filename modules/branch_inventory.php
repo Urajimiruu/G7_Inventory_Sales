@@ -104,16 +104,48 @@ $branches = $conn->query("SELECT branch_id, branch_name FROM Branches ORDER BY b
 <script>
 document.addEventListener("DOMContentLoaded", loadBranchInventory);
 
-function loadBranchInventory() {
+// function loadBranchInventory() {
+//     const form = document.getElementById("filterForm");
+//     const formData = new FormData(form);
+
+//     fetch("modules/list_branch_inventory.php?" + new URLSearchParams(formData), {
+//         method: "GET"
+//     })
+//     .then(res => res.text())
+//     .then(html => {
+//         document.getElementById("branchInventoryBody").innerHTML = html;
+//     });
+// }
+
+
+let currentPage = 1;
+const PAGE_LIMIT = 10;
+
+function buildQueryParams(page = 1) {
     const form = document.getElementById("filterForm");
     const formData = new FormData(form);
+    const params = new URLSearchParams(formData);
 
-    fetch("modules/list_branch_inventory.php?" + new URLSearchParams(formData), {
-        method: "GET"
-    })
+    params.set("page", page);
+    params.set("limit", PAGE_LIMIT);
+    return params.toString();
+}
+
+function loadBranchInventory(page = 1) {
+  const form = document.getElementById("filterForm");
+  const formData = new FormData(form);
+  formData.append('page', page); // send current page
+  const params = new URLSearchParams(formData);
+
+  fetch("modules/list_branch_inventory.php?" + params.toString())
     .then(res => res.text())
     .then(html => {
         document.getElementById("branchInventoryBody").innerHTML = html;
+    })
+    .catch(err => {
+        console.error("Error loading inventory:", err);
+        document.getElementById("branchInventoryBody").innerHTML = 
+          "<tr><td colspan='6' style='text-align:center;'>Error loading data</td></tr>";
     });
 }
 </script>

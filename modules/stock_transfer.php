@@ -133,17 +133,48 @@ $branchesRes = $conn->query("
 
 <script>
 
-  function loadTransfers() {
-      const form = document.getElementById("filterForm");
-      const formData = new FormData(form);
-      const params = new URLSearchParams(formData);
+  // function loadTransfers() {
+  //     const form = document.getElementById("filterForm");
+  //     const formData = new FormData(form);
+  //     const params = new URLSearchParams(formData);
 
-      fetch("modules/list_stock_transfers.php?" + params.toString())
-          .then(res => res.text())
-          .then(html => {
-              document.querySelector("#transferTableBody").innerHTML = html;
-          });
-  }
+  //     fetch("modules/list_stock_transfers.php?" + params.toString())
+  //         .then(res => res.text())
+  //         .then(html => {
+  //             document.querySelector("#transferTableBody").innerHTML = html;
+  //         });
+  // }
+
+  let currentPage = 1;
+  const PAGE_LIMIT = 10;
+
+function buildQueryParams(page = 1) {
+    const form = document.getElementById("filterForm");
+    const formData = new FormData(form);
+    const params = new URLSearchParams(formData);
+
+    params.set("page", page);
+    params.set("limit", PAGE_LIMIT);
+    return params.toString();
+}
+
+function loadTransfers(page = 1) {
+  const form = document.getElementById("filterForm");
+  const formData = new FormData(form);
+  formData.append('page', page); // send current page
+  const params = new URLSearchParams(formData);
+
+  fetch("modules/list_stock_transfers.php?" + params.toString())
+    .then(res => res.text())
+    .then(html => {
+        document.getElementById("transferTableBody").innerHTML = html;
+    })
+    .catch(err => {
+        console.error("Error loading inventory:", err);
+        document.getElementById("transferTableBody").innerHTML = 
+          "<tr><td colspan='6' style='text-align:center;'>Error loading data</td></tr>";
+    });
+}
   
   document.addEventListener("DOMContentLoaded", loadTransfers);
 
@@ -236,5 +267,7 @@ $branchesRes = $conn->query("
         alert('Transfer failed. Check console for details.');
       });
   }
+
+
 
 </script>

@@ -16,7 +16,7 @@ $branchId = (int)($_SESSION['branch_id'] ?? 0);
   <div class="sale-report-header">
     <div class="sale-filters-left">
       <!-- Branch filter -->
-      <select id="saleFilterBranch" onchange="loadSales()">
+      <select id="saleFilterBranch" onchange="loadSales(1)">
         <option value="">All Branches</option>
         <?php
         $bq = $conn->query("SELECT branch_id, branch_name FROM branches ORDER BY branch_name");
@@ -27,7 +27,7 @@ $branchId = (int)($_SESSION['branch_id'] ?? 0);
       </select>
 
       <!-- Product filter -->
-      <select id="saleFilterProduct" onchange="loadSales()">
+      <select id="saleFilterProduct" onchange="loadSales(1)">
         <option value="">All Products</option>
         <?php
         $pq = $conn->query("SELECT product_id, product_name FROM products ORDER BY product_name");
@@ -39,14 +39,14 @@ $branchId = (int)($_SESSION['branch_id'] ?? 0);
 
       <!-- Date range -->
       <label for="saleFrom" class="sr-only"><b>From:</b></label>
-      <input type="date" id="saleFrom" onchange="loadSales()">
+      <input type="date" id="saleFrom" onchange="loadSales(1)">
 
       <label for="saleTo" class="sr-only"><b>To:</b></label>
-      <input type="date" id="saleTo" onchange="loadSales()">
+      <input type="date" id="saleTo" onchange="loadSales(1)">
 
       <!-- Sort -->
       <label for="saleFrom" class="sr-only"><b>Sort:</b></label>
-      <select id="saleSort" onchange="loadSales()">
+      <select id="saleSort" onchange="loadSales(1)">
         <option value="date_desc">Newest</option>
         <option value="date_asc">Oldest</option>
         <option value="total_sales_desc">Highest Sales</option>
@@ -60,7 +60,7 @@ $branchId = (int)($_SESSION['branch_id'] ?? 0);
       </div>
 
       <!-- When summary selected, allow daily grouping -->
-      <select id="groupByDate" onchange="loadSales()">
+      <select id="groupByDate" onchange="loadSales(1)">
         <option value="none">Overall Totals</option>
         <option value="daily">Group by Date (Daily)</option>
       </select>
@@ -134,7 +134,7 @@ function setView(mode) {
     loadSales();
 }
 
-function gatherParams() {
+function gatherParams(page = salesCurrentPage) {
     return {
         view: viewMode,
         branch: document.getElementById('saleFilterBranch').value || '',
@@ -143,7 +143,9 @@ function gatherParams() {
         to: document.getElementById('saleTo').value || '',
         sort: document.getElementById('saleSort').value || '',
         group: document.getElementById('groupByDate').value || 'none',
-        search: document.getElementById('saleSearch').value.trim() || ''
+        search: document.getElementById('saleSearch').value.trim() || '',
+        page: page,
+        limit: SALES_LIMIT
     };
 }
 
@@ -155,16 +157,23 @@ function paramsToQuery(params) {
     return q.toString();
 }
 
-function loadSales() {
-    const params = gatherParams();
-    fetch('fetch_sales_report.php?' + paramsToQuery(params))
+let salesCurrentPage = 1;
+const SALES_LIMIT = 50; // number of rows per page
+
+function loadSales(page = 1) {
+    salesCurrentPage = page; // update current page
+
+    const params = gatherParams(page);
+
+    fetch("fetch_sales_report.php?" + paramsToQuery(params))
         .then(res => res.text())
         .then(html => {
-            document.getElementById('saleReportBody').innerHTML = html;
+            document.getElementById("saleReportBody").innerHTML = html;
         })
         .catch(err => {
             console.error(err);
-            document.getElementById('saleReportBody').innerHTML = '<tr><td colspan="8" style="text-align:center;">Request failed</td></tr>';
+            document.getElementById("saleReportBody").innerHTML =
+                '<tr><td colspan="8" style="text-align:center;">Request failed</td></tr>';
         });
 }
 

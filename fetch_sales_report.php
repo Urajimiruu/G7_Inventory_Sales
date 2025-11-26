@@ -20,6 +20,9 @@ $to      = $_GET['to'] ?? '';
 $sort    = $_GET['sort'] ?? 'date_desc';
 $group   = $_GET['group'] ?? 'none'; // 'none' or 'daily'
 $search  = trim($_GET['search'] ?? '');
+$page  = max(1, (int)($_GET['page'] ?? 1));
+$limit = (int)($_GET['limit'] ?? 50);
+$offset = ($page - 1) * $limit;
 
 // helper arrays for bind params
 $params = [];
@@ -92,10 +95,31 @@ if ($view === 'detailed') {
         case 'profit_desc': $sql .= " ORDER BY profit DESC"; break;
         case 'date_desc':
         default:
-            $sql .= " ORDER BY s.sale_date DESC, p.product_name ASC";
+            $sql .= " ORDER BY s.sale_date DESC, p.product_name ASC LIMIT ?, ?";
+            $types2 = $types . "ii";
+            $params2 = [...$params, $offset, $limit];
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param($types2, ...$params2);
+            $stmt->execute();
+            $result = $stmt->get_result();
     }
 
-    $stmt = $conn->prepare($sql);
+    $countSql = "SELECT COUNT(*) FROM Sales s 
+    JOIN Products p ON s.product_id = p.product_id 
+    JOIN Branches b ON s.branch_id = b.branch_id
+    $whereClauses";
+
+    $countStmt = $conn->prepare($countSql);
+
+    if (!empty($params)) {
+        $countStmt->bind_param($types, ...$params);
+    }
+    $countStmt->execute();
+    $countResult = $countStmt->get_result();
+    $totalRows = $countResult->fetch_row()[0];
+    $totalPages = ceil($totalRows / $limit);
+    $countStmt->close();
+
     if ($stmt === false) {
         echo "<tr><td colspan='8' style='text-align:center;'>SQL prepare error</td></tr>";
         exit;
@@ -190,7 +214,21 @@ if ($view === 'detailed') {
         }
     }
 
-    $stmt = $conn->prepare($sql);
+    $countSql = "SELECT COUNT(*) FROM Sales s 
+    JOIN Products p ON s.product_id = p.product_id 
+    JOIN Branches b ON s.branch_id = b.branch_id
+    $whereClauses";
+
+    $countStmt = $conn->prepare($countSql);
+
+    if (!empty($params)) {
+        $countStmt->bind_param($types, ...$params);
+    }
+    $countStmt->execute();
+    $countResult = $countStmt->get_result();
+    $totalRows = $countResult->fetch_row()[0];
+    $totalPages = ceil($totalRows / $limit);
+    $countStmt->close();
     if ($stmt === false) {
         echo "<tr><td colspan='8' style='text-align:center;'>SQL prepare error</td></tr>";
         exit;
@@ -245,6 +283,45 @@ if ($view === 'detailed') {
 
     $stmt->close();
 }
+
+echo "<tr><td colspan='8' style='text-align:center;'>";
+
+if ($totalPages > 1) {
+    echo '<div class="pagination">';
+
+    // Prev
+    if ($page > 1) {
+        echo "<button class='btn btn-primary' onclick='loadSales(" . ($page - 1) . ")'>Prev</button>";
+    }
+
+    $window = 2;
+    $start = max(1, $page - $window);
+    $end   = min($totalPages, $page + $window);
+
+    if ($start > 1) {
+        echo "<button class='btn btn-secondary' onclick='loadSales(1)'>1</button>";
+        if ($start > 2) echo "<span>...</span>";
+    }
+
+    for ($i = $start; $i <= $end; $i++) {
+        $active = ($i == $page) ? "btn-warning" : "btn-primary";
+        echo "<button class='btn $active' onclick='loadSales($i)'>$i</button>";
+    }
+
+    if ($end < $totalPages) {
+        if ($end < $totalPages - 1) echo "<span>...</span>";
+        echo "<button class='btn btn-secondary' onclick='loadSales($totalPages)'>$totalPages</button>";
+    }
+
+    // Next
+    if ($page < $totalPages) {
+        echo "<button class='btn btn-primary' onclick='loadSales(" . ($page + 1) . ")'>Next</button>";
+    }
+
+    echo "</div>";
+}
+
+echo "</td></tr>";
 
 $conn->close();
 ?>

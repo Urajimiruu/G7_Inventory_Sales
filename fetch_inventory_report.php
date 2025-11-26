@@ -1,21 +1,79 @@
 <?php
 require_once "db_connection.php";
-
 session_start();
 
 if (!isset($_SESSION['user_id'])) {
-    echo "<tr><td colspan='10' style='text-align:center;'>Unauthorized</td></tr>";
+    echo "<tr><td colspan='10' style='text-align:center;'>Unauthorized</td></tr><!--PAGINATION-->";
     exit;
 }
 
-$role     = $_SESSION['role'] ?? '';
-$branchId = (int)($_SESSION['branch_id'] ?? 0);
-$search   = trim($_GET['search'] ?? '');
+$role          = $_SESSION['role'] ?? '';
+$branchId      = (int)($_SESSION['branch_id'] ?? 0);
+$search        = trim($_GET['search'] ?? '');
 $filterBranch  = trim($_GET['branch'] ?? '');
 $filterProduct = trim($_GET['product'] ?? '');
 $sortStock     = trim($_GET['sort'] ?? '');
+$page          = max(1, (int)($_GET['page'] ?? 1));
+$limit         = (int)($_GET['limit'] ?? 20);
+$offset        = ($page - 1) * $limit;
 
-// Base query with enhancements: total cost, potential revenue
+/* ------------------------------------------
+   1. BUILD FILTER CONDITIONS
+------------------------------------------ */
+$where = " WHERE 1 ";
+$params = [];
+$types = "";
+
+// shop restriction
+if (strtolower($role) === 'shop' && $branchId > 0) {
+    $where .= " AND bi.branch_id = ? ";
+    $types .= "i";
+    $params[] = $branchId;
+}
+
+// search
+if ($search !== '') {
+    $where .= " AND (p.product_name LIKE ? OR b.branch_name LIKE ?) ";
+    $types .= "ss";
+    $params[] = "%$search%";
+    $params[] = "%$search%";
+}
+
+// explicit branch/product filters
+if ($filterBranch !== '') {
+    $where .= " AND bi.branch_id = ? ";
+    $types .= "i";
+    $params[] = (int)$filterBranch;
+}
+
+if ($filterProduct !== '') {
+    $where .= " AND bi.product_id = ? ";
+    $types .= "i";
+    $params[] = (int)$filterProduct;
+}
+
+/* ------------------------------------------
+   2. COUNT TOTAL ROWS
+------------------------------------------ */
+$countSql = "
+    SELECT COUNT(*) AS total
+    FROM branchinventory bi
+    JOIN products p ON bi.product_id = p.product_id
+    JOIN branches b ON bi.branch_id = b.branch_id
+    $where
+";
+
+$stmtCount = $conn->prepare($countSql);
+if (!empty($params)) $stmtCount->bind_param($types, ...$params);
+$stmtCount->execute();
+$totalRows = $stmtCount->get_result()->fetch_assoc()['total'] ?? 0;
+$stmtCount->close();
+
+$totalPages = max(1, ceil($totalRows / $limit));
+
+/* ------------------------------------------
+   3. MAIN QUERY WITH LIMIT
+------------------------------------------ */
 $sql = "
 SELECT 
     bi.branch_id,
@@ -31,58 +89,30 @@ SELECT
 FROM branchinventory bi
 JOIN products p ON bi.product_id = p.product_id
 JOIN branches b ON bi.branch_id = b.branch_id
-WHERE 1
+$where
 ";
 
-// Restrict to shop branch if role is "shop"
-$params = [];
-$types  = "";
-
-if (strtolower($role) === 'shop' && $branchId > 0) {
-    $sql .= " AND bi.branch_id = ? ";
-    $types .= "i";
-    $params[] = $branchId;
-}
-
-// Search filter
-if ($search !== '') {
-    $sql .= " AND (p.product_name LIKE ? OR b.branch_name LIKE ?)";
-    $types .= "ss";
-    $params[] = "%$search%";
-    $params[] = "%$search%";
-}
-
-if ($filterBranch !== '') {
-    $sql .= " AND bi.branch_id = ? ";
-    $types .= "i";
-    $params[] = (int)$filterBranch;
-}
-
-if ($filterProduct !== '') {
-    $sql .= " AND bi.product_id = ? ";
-    $types .= "i";
-    $params[] = (int)$filterProduct;
-}
-
-
 if ($sortStock === "asc") {
-    $sql .= " ORDER BY bi.quantity ASC";
+    $sql .= " ORDER BY bi.quantity ASC ";
 } elseif ($sortStock === "desc") {
-    $sql .= " ORDER BY bi.quantity DESC";
+    $sql .= " ORDER BY bi.quantity DESC ";
 } else {
-    $sql .= " ORDER BY b.branch_name, p.product_name";
+    $sql .= " ORDER BY b.branch_name, p.product_name ";
 }
 
+$sql .= " LIMIT ?, ? ";
+
+$types2 = $types . "ii";
+$params2 = array_merge($params, [$offset, $limit]);
 
 $stmt = $conn->prepare($sql);
-
-if (!empty($params)) {
-    $stmt->bind_param($types, ...$params);
-}
-
+$stmt->bind_param($types2, ...$params2);
 $stmt->execute();
 $result = $stmt->get_result();
 
+/* ------------------------------------------
+   4. OUTPUT TABLE ROWS
+------------------------------------------ */
 if ($result && $result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
         $branchName   = htmlspecialchars($row['branch_name'], ENT_QUOTES);
@@ -94,7 +124,6 @@ if ($result && $result->num_rows > 0) {
         $totalCost    = number_format((float)$row['total_cost'], 2);
         $revenue      = number_format((float)$row['potential_revenue'], 2);
 
-        // Stock status
         if ($qty === 0) {
             $statusText  = 'No Stock';
             $statusClass = 'inv-no-stock';
@@ -122,11 +151,55 @@ if ($result && $result->num_rows > 0) {
                     {$statusText}
                 </div>
             </td>
-        </tr>
-        ";
+        </tr>";
     }
 } else {
-    echo "<tr><td colspan='9' style='text-align:center;'>No branch inventory found</td></tr>";
+    echo "<tr><td colspan='10' style='text-align:center;'>No branch inventory found</td></tr>";
 }
+
+$stmt->close();
+
+/* ------------------------------------------
+   5. PAGINATION ROW
+------------------------------------------ */
+echo "<tr><td colspan='8' style='text-align:center;'>";
+
+if ($totalPages > 1) {
+    echo '<div class="pagination">';
+
+    // Prev
+    if ($page > 1) {
+        echo "<button class='btn btn-primary' onclick='loadInventory(" . ($page - 1) . ")'>Prev</button>";
+    }
+
+    $window = 2;
+    $start = max(1, $page - $window);
+    $end   = min($totalPages, $page + $window);
+
+    if ($start > 1) {
+        echo "<button class='btn btn-secondary' onclick='loadInventory(1)'>1</button>";
+        if ($start > 2) echo "<span>...</span>";
+    }
+
+    for ($i = $start; $i <= $end; $i++) {
+        $active = ($i == $page) ? "btn-warning" : "btn-primary";
+        echo "<button class='btn $active' onclick='loadInventory($i)'>$i</button>";
+    }
+
+    if ($end < $totalPages) {
+        if ($end < $totalPages - 1) echo "<span>...</span>";
+        echo "<button class='btn btn-secondary' onclick='loadInventory($totalPages)'>$totalPages</button>";
+    }
+
+    // Next
+    if ($page < $totalPages) {
+        echo "<button class='btn btn-primary' onclick='loadInventory(" . ($page + 1) . ")'>Next</button>";
+    }
+
+    echo "</div>";
+}
+
+echo "</td></tr>";
+echo "<!--PAGINATION-->"; // marker for JS to split
 
 $conn->close();

@@ -119,17 +119,17 @@
     document.getElementById('restockModal').classList.remove('show');
   }
 
-  function loadMainInventory() {
-    const form = document.getElementById("filterForm");
-    const formData = new FormData(form);
-    const params = new URLSearchParams(formData);
+//   function loadMainInventory() {
+//     const form = document.getElementById("filterForm");
+//     const formData = new FormData(form);
+//     const params = new URLSearchParams(formData);
 
-    fetch("modules/list_main_inventory.php?" + params.toString())
-    .then(res => res.text())
-    .then(html => {
-        document.getElementById("mainInvBody").innerHTML = html;
-    });
-}
+//     fetch("modules/list_main_inventory.php?" + params.toString())
+//     .then(res => res.text())
+//     .then(html => {
+//         document.getElementById("mainInvBody").innerHTML = html;
+//     });
+// }
 
 document.addEventListener("DOMContentLoaded", loadMainInventory);
 

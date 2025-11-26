@@ -111,9 +111,15 @@ $unit = $conn->query("SELECT DISTINCT unit FROM Products");
 <script>
 let currentProductId = null;
 
-function loadProducts() {
+let currentPage = 1;
+
+function loadProducts(page = 1) {
+    currentPage = page;
+
     const form = document.getElementById("filterForm");
     const formData = new FormData(form);
+
+    formData.append('page', page);
 
     const params = new URLSearchParams(formData);
 

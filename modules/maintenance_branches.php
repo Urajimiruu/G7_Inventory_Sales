@@ -62,9 +62,9 @@ require_once "db_connection.php";
 <script>
 let currentBranchId = null;
 
-function loadBranches() {
+function loadBranches(page = 1) {
     const search = document.querySelector('input[name="search"]').value.trim();
-    fetch("list_branches.php?search=" + encodeURIComponent(search))
+    fetch(`list_branches.php?search=${encodeURIComponent(search)}&page=${page}`)
         .then(res => res.text())
         .then(html => {
             document.getElementById("branchTableBody").innerHTML = html;

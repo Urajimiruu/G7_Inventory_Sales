@@ -80,7 +80,12 @@ $branchId = (int)($_SESSION['branch_id'] ?? 0);
 </div>
 
 <script>
-function loadProfitLoss() {
+let currentProfitPage = 1;
+const profitLimit = 50; // change this if you want more rows per page
+
+function loadProfitLoss(page = 1) {
+    currentProfitPage = page;
+
     const search  = document.getElementById('profitLossSearch').value.trim();
     const branch  = document.getElementById('filterBranch').value;
     const product = document.getElementById('filterProduct').value;
@@ -90,20 +95,22 @@ function loadProfitLoss() {
         search: search,
         branch: branch,
         product: product,
-        sort: sort
+        sort: sort,
+        page: page,
+        limit: profitLimit
     });
 
     fetch('fetch_profitloss_report.php?' + params.toString())
         .then(res => res.text())
-        .then(html => {
-            document.getElementById('profitLossBody').innerHTML = html;
+        .then(response => {
+            // response contains TABLE + PAGINATION (split by delimiter)
+            const [tableRows, paginationHtml] = response.split("<!--PAGINATION-->");
+            document.getElementById('profitLossBody').innerHTML = tableRows;
+            document.getElementById('profitLossPagination').innerHTML = paginationHtml;
         });
 }
 
-// Initial load
-loadProfitLoss();
-
-// Placeholder for export
+// Export with same filters
 function exportProfitLoss() {
     const search  = document.getElementById('profitLossSearch').value.trim();
     const branch  = document.getElementById('filterBranch').value;
@@ -120,4 +127,6 @@ function exportProfitLoss() {
     window.location.href = 'export_profitloss_report.php?' + params.toString();
 }
 
+// Initial load
+loadProfitLoss();
 </script>

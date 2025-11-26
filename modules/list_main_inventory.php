@@ -5,7 +5,7 @@ $unit   = $_GET['unit'] ?? '';
 $sort   = $_GET['sort'] ?? 'ASC';
 $search = $_GET['search'] ?? '';
 $page   = max(1, (int)($_GET['page'] ?? 1));
-$limit  = 10; // items per page
+$limit  = 50; // items per page
 $offset = ($page - 1) * $limit;
 
 $sql = "
