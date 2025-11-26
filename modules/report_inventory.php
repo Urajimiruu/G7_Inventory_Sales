@@ -128,7 +128,7 @@ function exportInventory() {
     });
 
     // Open export in new tab
-    window.open('export_inventory_excel.php?' + params.toString(), '_blank');
+    window.open('export_inventory_pdf.php?' + params.toString(), '_blank');
 }
 
 loadInventory();

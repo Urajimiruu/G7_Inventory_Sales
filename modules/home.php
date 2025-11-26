@@ -468,7 +468,7 @@ $selectedBranch = $data['selectedBranch'];
         <div class="charts-container">
             <!-- Monthly Sales Chart -->
             <div class="chart-card card-hover">
-                <h3>Monthly Sales Trend</h3>
+                <h3>Sales Trend</h3>
                 <div class="chart-container">
                     <canvas id="salesChart"></canvas>
                 </div>
