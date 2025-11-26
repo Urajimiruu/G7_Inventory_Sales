@@ -31,7 +31,7 @@ if (isset($customTitles[$page])) {
 
 //Descriptions
 $descriptions = [
-  "home" => "Welcome to your dashboard overview.",
+  "home" => "Welcome to your dashboard overview. Monitor all branches, users, and performance metrics from a centralized view.",
   "sales" => "Manage and record sales transactions efficiently.",
   "main_inventory" => "Monitor and manage all items in the main warehouse.",
   "branch_inventory" => "Monitor inventory specific to each branch.",

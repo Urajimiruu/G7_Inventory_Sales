@@ -27,11 +27,14 @@ body {
 }
 
 .company-logo {
-  width: 150px;
-  height: 150px;
-  background-color: #CBD5E1;
+  width: 250px;
+  height: 250px;
+  background-image: url('../includes/bizztrack_logo.png'); /* ✅ path from css folder */
+  background-size: contain; /* keeps proportions */
+  background-repeat: no-repeat;
+  background-position: center;
   border-radius: 50%;
-  margin: 0 auto 20px;
+  margin: 0 auto 0px;
 }
 
 .brand-title {
@@ -189,4 +192,80 @@ input:focus {
 @keyframes fadeIn {
   from { opacity: 0; transform: scale(0.9); }
   to { opacity: 1; transform: scale(1); }
+}
+
+/* ==============================
+   OTP MODAL STYLING
+   ============================== */
+.otp-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.6);
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.otp-modal-content {
+  background: #ffffff;
+  padding: 30px 35px;
+  border-radius: 14px;
+  width: 340px;
+  text-align: center;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.25);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.otp-modal-content h2 {
+  font-size: 1.4rem;
+  margin-bottom: 10px;
+  color: #0F172A;
+}
+
+.otp-instruction {
+  font-size: 0.9rem;
+  color: #475569;
+  margin-bottom: 15px;
+}
+
+.otp-input {
+  width: 80%;
+  padding: 12px;
+  border: 1px solid #94A3B8;
+  border-radius: 8px;
+  font-size: 18px;
+  text-align: center;
+  letter-spacing: 4px;
+  margin-bottom: 18px;
+}
+
+#verifyBtn, #resendBtn {
+  width: 100%;
+  background-color: #0284C7;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+#resendBtn:disabled {
+  background-color: #94A3B8;
+  cursor: not-allowed;
+}
+
+.otp-message {
+  margin-top: 12px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
 }

@@ -139,14 +139,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
           <button type="submit" class="btn-login">Login</button>
         </form>
       <?php else: ?>
-        <h2>Enter OTP</h2>
-        <div id="otp-section">
-          <input type="text" id="otp" maxlength="6" placeholder="6-digit OTP" class="textbox"><br><br>
-          <button id="verifyBtn" onclick="verifyOTP()">Verify OTP</button>
-          <button id="resendBtn" onclick="resendOTP()" disabled>Resend OTP (<span id="countdown">30</span>s)</button>
-          <p id="otpMessage" style="color:green;"></p>
-        </div>
+        <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            document.getElementById("otpModal").style.display = "flex";
+        });
+        </script>
       <?php endif; ?>
+
     </div>
   </div>
 </div>
@@ -178,18 +177,21 @@ function verifyOTP() {
   .then(data => {
     messageBox.innerText = data;
     if (data.toLowerCase().includes("verified") || data.toLowerCase().includes("success")) {
-      messageBox.style.color = "green";
-      setTimeout(() => { window.location.href = "redirect.php"; }, 1500);
+        messageBox.style.color = "green";
+        setTimeout(() => { 
+            document.getElementById("otpModal").style.display = "none";
+            window.location.href = "redirect.php"; 
+        }, 1200);
     } else {
-      messageBox.style.color = "red";
+          messageBox.style.color = "red";
+        }
+      })
+      .catch(err => {
+        messageBox.style.color = "red";
+        messageBox.innerText = "Error verifying OTP.";
+        console.error(err);
+      });
     }
-  })
-  .catch(err => {
-    messageBox.style.color = "red";
-    messageBox.innerText = "Error verifying OTP.";
-    console.error(err);
-  });
-}
 
 function resendOTP() {
   fetch('resend_otp.php')
@@ -224,5 +226,27 @@ function startCooldown() {
   }, 1000);
 }
 </script>
+
+<!-- OTP Modal -->
+<div id="otpModal" class="otp-modal">
+  <div class="otp-modal-content">
+
+      <h2>Two-Factor Verification</h2>
+
+      <p class="otp-instruction">Enter the 6-digit OTP sent to your registered number.</p>
+
+      <input type="text" id="otp" maxlength="6" placeholder="Enter OTP" class="otp-input">
+
+      <button id="verifyBtn" onclick="verifyOTP()">Verify OTP</button>
+
+      <button id="resendBtn" onclick="resendOTP()" disabled>
+          Resend OTP (<span id="countdown">30</span>s)
+      </button>
+
+      <p id="otpMessage" class="otp-message"></p>
+
+  </div>
+</div>
+
 </body>
 </html>

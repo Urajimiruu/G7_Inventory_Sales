@@ -25,7 +25,7 @@ if (isset($customTitles[$page])) {
 
 //Descriptions
 $descriptions = [
-  "home" => "Welcome to your dashboard overview.",
+  "home" => "Welcome to your dashboard overview. View your current stock, sales history, and activity summary for this branch.",
   "sales" => "Manage and record sales transactions efficiently.",
   "branch_inventory" => "Monitor inventory specific to each branch.",
   "report_sales" => "View detailed sales reports and filter any way you want.",

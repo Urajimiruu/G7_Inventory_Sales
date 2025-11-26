@@ -191,9 +191,9 @@ $selectedBranch = $data['selectedBranch'];
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
             min-height: 100vh;
-            padding: 20px;
+            /* padding: 20px; */
         }
 
         .dashboard {
@@ -258,7 +258,7 @@ $selectedBranch = $data['selectedBranch'];
         .filter-group select:focus {
             outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+            box-shadow: 0 0 0 1px rgba(67, 97, 238, 0.1);
         }
 
         .stats-grid {
@@ -280,7 +280,7 @@ $selectedBranch = $data['selectedBranch'];
             overflow: hidden;
         }
 
-        .stat-card::before {
+        /* .stat-card::before {
             content: '';
             position: absolute;
             top: 0;
@@ -288,7 +288,7 @@ $selectedBranch = $data['selectedBranch'];
             right: 0;
             height: 4px;
             background: linear-gradient(90deg, var(--primary), var(--success));
-        }
+        } */
 
         .stat-card:hover {
             transform: translateY(-5px);
@@ -371,9 +371,9 @@ $selectedBranch = $data['selectedBranch'];
             }
         }
 
-        .gradient-bg {
+        /* .gradient-bg {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
+        } */
 
         .card-hover {
             transition: all 0.3s ease;
@@ -388,9 +388,9 @@ $selectedBranch = $data['selectedBranch'];
 <body>
     <div class="dashboard">
         <!-- Header -->
-        <div class="dashboard-header">
+        <!-- <div class="dashboard-header">
             <h1>Sales And Inventory Dashboard</h1>
-        </div>
+        </div> -->
 
         <!-- Filters Section -->
         <div class="filters-section card-hover">
@@ -491,7 +491,7 @@ $selectedBranch = $data['selectedBranch'];
         const salesData = <?= json_encode($lineData) ?>;
 
         new Chart(salesCtx, {
-            type: 'bar',
+            type: 'line',
             data: {
                 labels: salesLabels,
                 datasets: [{
@@ -584,8 +584,8 @@ $selectedBranch = $data['selectedBranch'];
                 datasets: [{
                     label: 'Quantity Sold',
                     data: currentMonthQuantities,
-                    backgroundColor: 'rgba(247, 37, 133, 0.8)',
-                    borderColor: 'rgba(247, 37, 133, 1)',
+                    backgroundColor: 'rgba(120, 95, 2, 0.8)',
+                    borderColor: 'rgba(120, 95, 2, 0.8)',
                     borderWidth: 2,
                     borderRadius: 8,
                     borderSkipped: false,

@@ -178,8 +178,8 @@ function exportSales() {
     const params = gatherParams(); // get current filters
     const query = new URLSearchParams(params).toString();
 
-    // open export in new tab
-    window.open('export_sales_report.php?' + query, '_blank');
+    // open export in new tab as PDF
+    window.open('export_sales_report_pdf.php?' + query, '_blank');
 }
 
 
