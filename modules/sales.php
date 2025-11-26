@@ -144,17 +144,17 @@
   </div>
 
   <!-- Record Sale Modal -->
-  <div id="saleModal" class="modal-overlay">
-    <div class="modal-box">
-      <h4 id="saleModalTitle">RECORD SALE</h4>
+  <div id="saleModal" class="modal-overlay record-sale-overlay">
+    <div class="modal-box record-sale-box">
+      <h4 id="saleModalTitle" class="record-sale-title">RECORD SALE</h4>
 
       <form id="saleForm" onsubmit="return false;">
-        <div class="form-row">
+        <div class="form-row record-sale-field">
           <label for="saleDate">Date:</label>
           <input type="date" id="saleDate" name="sale_date" required>
         </div>
 
-        <div class="form-row">
+        <div class="form-row record-sale-field">
           <label for="saleBranch">Branch:</label>
           <select id="saleBranch" name="branch_id" required <?= ($role === 'shop' && $branchId > 0) ? 'disabled' : '' ?>>
             <option value="">Select Branch</option>
@@ -167,7 +167,7 @@
           </select>
         </div>
 
-        <div class="form-row">
+        <div class="form-row record-sale-field">
           <label for="customerType">Customer Type:</label>
           <select id="customerType" name="customer_type" required>
             <option value="Regular" selected>Regular</option>
@@ -197,7 +197,7 @@
           </div>
         </div>
 
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+        <div class="sale-bottom-row">
           <button type="button" class="btn btn-secondary" onclick="addSaleRow()">Add Item</button>
           <div>
             <strong>Grand Total: ₱<span id="saleGrandTotal">0.00</span></strong>
@@ -205,27 +205,28 @@
         </div>
 
         <div class="modal-buttons" style="margin-top:15px;">
-          <button type="button" class="btn btn-primary" onclick="saveSale()">Confirm</button>
-          <button type="button" class="btn btn-danger" onclick="closeSaleModal()">Cancel</button>
+          <button type="button" id="saleConfirmBtn" class="btn btn-primary" onclick="saveSale()">Confirm</button>
+          <button type="button" id="saleCancelBtn" class="btn btn-danger" onclick="closeSaleModal()">Cancel</button>
         </div>
+
       </form>
     </div>
   </div>
 
   <!-- Edit Sale Modal -->
-  <div id="editSaleModal" class="modal-overlay">
-    <div class="modal-box">
+  <div id="editSaleModal" class="modal-overlay edit-sale-overlay">
+    <div class="modal-box edit-sale-box">
       <h4 id="editSaleModalTitle">EDIT SALE</h4>
 
       <form id="editSaleForm" onsubmit="return false;">
         <input type="hidden" id="editSaleId" name="sale_id">
 
-        <div class="form-row">
+        <div class="form-row edit-sale-field">
           <label for="editSaleDate">Date:</label>
           <input type="date" id="editSaleDate" name="sale_date" required>
         </div>
 
-        <div class="form-row">
+        <div class="form-row edit-sale-field">
           <label for="editSaleBranch">Branch:</label>
           <select id="editSaleBranch" name="branch_id" required>
             <option value="">Select Branch</option>
@@ -235,7 +236,7 @@
           </select>
         </div>
 
-        <div class="form-row">
+        <div class="form-row edit-sale-field">
           <label for="editSaleProduct">Product:</label>
           <select id="editSaleProduct" name="product_id" required>
             <option value="">Select Product</option>
@@ -245,12 +246,12 @@
           </select>
         </div>
 
-        <div class="form-row">
+        <div class="form-row edit-sale-field">
           <label for="editSaleQty">Quantity:</label>
           <input type="number" id="editSaleQty" name="quantity" min="1" required>
         </div>
 
-        <div class="form-row">
+        <div class="form-row edit-sale-field">
           <label for="editCustomerType">Customer Type:</label>
           <select id="editCustomerType" name="customer_type" required>
             <option value="Regular">Regular</option>
@@ -612,6 +613,8 @@
       return;
     }
 
+    setSaleButtonsEnabled(false);
+
     fetch('modules/record_sale.php', {
       method: 'POST',
       body: formData
@@ -621,7 +624,11 @@
         console.log("Record sale response:", text);
         let data;
         try { data = JSON.parse(text); }
-        catch (e) { throw new Error("Not valid JSON: " + text); }
+        catch (e) { 
+          setSaleButtonsEnabled(true); // ✅ re-enable
+          throw new Error("Not valid JSON: " + text); 
+        }
+        setSaleButtonsEnabled(true); // ✅ re-enable
 
         if (data.success) {
           alert("Sale recorded successfully!");
@@ -632,6 +639,7 @@
         }
       })
       .catch(err => {
+        setSaleButtonsEnabled(true); // ✅ re-enable
         console.error("Record sale error:", err);
         alert("Error recording sale. Check console for details.");
       });
@@ -664,5 +672,21 @@
     }
     loadSales();
   });
+
+  function setSaleButtonsEnabled(enabled) {
+    const confirmBtn = document.getElementById('saleConfirmBtn');
+    const cancelBtn  = document.getElementById('saleCancelBtn');
+
+    if (enabled) {
+      confirmBtn.disabled = false;
+      cancelBtn.disabled = false;
+      document.body.style.cursor = "default";
+    } else {
+      confirmBtn.disabled = true;
+      cancelBtn.disabled = true;
+      document.body.style.cursor = "wait";
+    }
+  }
+
 
 </script>

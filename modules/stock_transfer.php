@@ -76,18 +76,18 @@ $branchesRes = $conn->query("
 
 
   <!-- Transfer Modal -->
-  <div id="transferModal" class="modal-overlay">
-    <div class="modal-box">
+  <div id="transferModal" class="modal-overlay transfer-overlay">
+    <div class="modal-box transfer-box">
       <h4 id="transferModalTitle">TRANSFER STOCK</h4>
 
       <form id="transferForm" onsubmit="return false;">
 
-        <div class="form-row">
+        <div class="form-row transfer-field">
           <label>Date:</label>
           <input type="date" id="transferDate" name="date" required>
         </div>
 
-        <div class="form-row">
+        <div class="form-row transfer-field">
           <label>Product:</label>
           <select id="transferProduct" name="product_id" required>
               <option value="">Select Product</option>
@@ -99,7 +99,7 @@ $branchesRes = $conn->query("
           </select>
         </div>
 
-        <div class="form-row">
+        <div class="form-row transfer-field">
           <label>Branch:</label>
           <select id="transferBranch" name="branch_id" required>
             <option value="">Select Branch</option>
@@ -111,12 +111,12 @@ $branchesRes = $conn->query("
           </select>
         </div>
 
-        <div class="form-row">
+        <div class="form-row transfer-field">
           <label>Current Stock (Main):</label>
           <input type="number" id="currentStock" name="current_stock" readonly>
         </div>
 
-        <div class="form-row">
+        <div class="form-row transfer-field">
           <label>Quantity to Transfer:</label>
           <input type="number" id="transferQty" name="quantity" min="1" required>
         </div>
