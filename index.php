@@ -131,7 +131,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         <h2>USER LOGIN</h2>
         <form method="POST" action="">
           <label>USERNAME :</label>
-          <input type="text" name="username" value="<?= isset($username) ? htmlspecialchars($username) : '' ?>" required>
+          <!-- <input type="text" name="username" value="<?= isset($username) ? htmlspecialchars($username) : '' ?>" required> -->
+          <input type="text" name="username" required>
 
           <label>PASSWORD :</label>
           <input type="password" name="password" required>
