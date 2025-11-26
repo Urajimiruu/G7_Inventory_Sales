@@ -762,3 +762,44 @@
 .pl-loss-dot {
   background-color: #dc3545;
 }
+
+.pagination {
+    margin-top: 12px;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Base button style */
+.pagination button {
+    padding: 6px 14px;
+    border: 1px solid #0059ff;
+    background: #004ee0;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    color: #ffffff;
+}
+
+/* Hover effect */
+.pagination button:hover {
+    background: #4784f5;
+}
+
+/* Disabled state */
+.pagination button:disabled {
+    background: #003db0;
+    cursor: not-allowed;
+    color: #000000;
+}
+
+/* Current page label */
+.pagination span {
+    margin: 0 10px;
+    font-weight: bold;
+    font-size: 14px;
+    color: #000000;
+}

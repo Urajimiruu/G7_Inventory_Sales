@@ -124,7 +124,7 @@ function exportProfitLoss() {
         sort: sort
     });
 
-    window.location.href = 'export_profitloss_report.php?' + params.toString();
+    window.location.href = 'export_profitloss_report_pdf.php?' + params.toString();
 }
 
 // Initial load
