@@ -1,7 +1,6 @@
 <?php
 require_once "db_connection.php";
 
-
 if (!isset($_SESSION['user_id'])) {
   header("Location: index.php");
   exit;
@@ -263,6 +262,77 @@ if ($returnsRes && $returnsRes->num_rows > 0) {
       border-color: #007bff;
       box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
     }
+
+    /* Loading Indicator Styles */
+    .table-scroll {
+      position: relative;
+      min-height: 200px;
+    }
+
+    .loading-indicator {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.95);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      border-radius: 8px;
+      backdrop-filter: blur(2px);
+    }
+
+    .loading-spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #dc3545;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 15px;
+    }
+
+    .loading-indicator p {
+      margin: 0;
+      color: #333;
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Skeleton Loading Styles */
+    .skeleton-row {
+      display: flex;
+      align-items: center;
+      padding: 12px 8px;
+      border-bottom: 1px solid #eee;
+      gap: 10px;
+    }
+
+    .skeleton-cell {
+      height: 16px;
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: loading 1.5s infinite;
+      border-radius: 4px;
+    }
+
+    @keyframes loading {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* Summary loading state */
+    .summary-loading .value {
+      color: #ccc !important;
+    }
   </style>
 </head>
 <body>
@@ -329,112 +399,190 @@ if ($returnsRes && $returnsRes->num_rows > 0) {
             </div>
           </div>
         </form>
-<div id="returnsContainer">
-        <!-- Returns Summary -->
-        <div class="returns-summary">
-          <div class="summary-item">
-            <div class="value"><?= $totalReturns ?></div>
-            <div class="label">Total Returns</div>
-          </div>
-          <div class="summary-item">
-            <div class="value"><?= number_format($totalQuantity) ?></div>
-            <div class="label">Items Returned</div>
-          </div>
-          <div class="summary-item">
-            <div class="value">₱<?= number_format($totalAmount, 2) ?></div>
-            <div class="label">Total Value</div>
-          </div>
-        </div>
 
-        <!-- Returns Table -->
-        <div class="table-scroll" role="region" aria-label="Returned sales table">
-          <table class="vertical" aria-describedby="caption-returns">
-            <thead>
-              <tr>
-                <th scope="col">Return Date</th>
-                <th scope="col">Original Sale Date</th>
-                <th scope="col">Product</th>
-                <th scope="col">Branch</th>
-                <th scope="col" class="right">Quantity</th>
-                <th scope="col" class="right">Unit Price</th>
-                <th scope="col" class="right">Total Value</th>
-                <th scope="col">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              <?php if ($returnsRes && $returnsRes->num_rows > 0): ?>
-                <?php while ($return = $returnsRes->fetch_assoc()): ?>
+        <div id="returnsContainer">
+          <!-- Returns Summary -->
+          <div class="returns-summary" id="returnsSummary">
+            <div class="summary-item">
+              <div class="value"><?= $totalReturns ?></div>
+              <div class="label">Total Returns</div>
+            </div>
+            <div class="summary-item">
+              <div class="value"><?= number_format($totalQuantity) ?></div>
+              <div class="label">Items Returned</div>
+            </div>
+            <div class="summary-item">
+              <div class="value">₱<?= number_format($totalAmount, 2) ?></div>
+              <div class="label">Total Value</div>
+            </div>
+          </div>
+
+          <!-- Returns Table -->
+          <div class="table-scroll" role="region" aria-label="Returned sales table">
+            <!-- Loading Indicator -->
+            <div id="returnsLoading" class="loading-indicator" style="display: none;">
+              <div class="loading-spinner"></div>
+              <p>Loading returns data...</p>
+            </div>
+
+            <table class="vertical" aria-describedby="caption-returns">
+              <thead>
+                <tr>
+                  <th scope="col">Return Date</th>
+                  <th scope="col">Original Sale Date</th>
+                  <th scope="col">Product</th>
+                  <th scope="col">Branch</th>
+                  <th scope="col" class="right">Quantity</th>
+                  <th scope="col" class="right">Unit Price</th>
+                  <th scope="col" class="right">Total Value</th>
+                  <th scope="col">Status</th>
+                </tr>
+              </thead>
+              <tbody id="returnsTableBody">
+                <?php if ($returnsRes && $returnsRes->num_rows > 0): ?>
+                  <?php while ($return = $returnsRes->fetch_assoc()): ?>
+                    <tr>
+                      <td><strong><?= htmlspecialchars($return['return_date']) ?></strong></td>
+                      <td class="muted"><?= htmlspecialchars($return['sale_date']) ?></td>
+                      <td><?= htmlspecialchars($return['product_name']) ?></td>
+                      <td><?= htmlspecialchars($return['branch_name']) ?></td>
+                      <td class="right"><?= (int)$return['quantity'] ?></td>
+                      <td class="right">₱<?= number_format((float)$return['selling_price'], 2) ?></td>
+                      <td class="right">₱<?= number_format((float)$return['total'], 2) ?></td>
+                      <td>
+                        <span class="status-returned">Returned</span>
+                      </td>
+                    </tr>
+                  <?php endwhile; ?>
+                <?php else: ?>
                   <tr>
-                    <td><strong><?= htmlspecialchars($return['return_date']) ?></strong></td>
-                    <td class="muted"><?= htmlspecialchars($return['sale_date']) ?></td>
-                    <td><?= htmlspecialchars($return['product_name']) ?></td>
-                    <td><?= htmlspecialchars($return['branch_name']) ?></td>
-                    <td class="right"><?= (int)$return['quantity'] ?></td>
-                    <td class="right">₱<?= number_format((float)$return['selling_price'], 2) ?></td>
-                    <td class="right">₱<?= number_format((float)$return['total'], 2) ?></td>
-                    <td>
-                      <span class="status-returned">Returned</span>
+                    <td colspan="8" class="no-returns">
+                      <h3>No Returned Sales</h3>
+                      <p>
+                        <?php if ($filterProduct || $filterBranch || $filterFromDate || $filterToDate): ?>
+                          No returned sales found matching your filter criteria.
+                        <?php else: ?>
+                          There are no returned sales records to display.
+                        <?php endif; ?>
+                      </p>
                     </td>
                   </tr>
-                <?php endwhile; ?>
-              <?php else: ?>
-                <tr>
-                  <td colspan="8" class="no-returns">
-                    <h3>No Returned Sales</h3>
-                    <p>
-                      <?php if ($filterProduct || $filterBranch || $filterFromDate || $filterToDate): ?>
-                        No returned sales found matching your filter criteria.
-                      <?php else: ?>
-                        There are no returned sales records to display.
-                      <?php endif; ?>
-                    </p>
-                  </td>
-                </tr>
-              <?php endif; ?>
-            </tbody>
-          </table>
+                <?php endif; ?>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
   </div>
-</div>
- <script>
-document.addEventListener('DOMContentLoaded', function() {
 
-    const filterForm = document.getElementById('filterForm');
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const filterForm = document.getElementById('filterForm');
 
-    function updateTableOnly() {
+      function showLoadingIndicator() {
+        const loadingIndicator = document.getElementById('returnsLoading');
+        const tableBody = document.getElementById('returnsTableBody');
+        const summary = document.getElementById('returnsSummary');
+        
+        // Show loading indicator
+        loadingIndicator.style.display = 'flex';
+        
+        // Add skeleton loading to table
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="8">
+              <div class="skeleton-row">
+                <div class="skeleton-cell" style="width: 120px;"></div>
+                <div class="skeleton-cell" style="width: 120px;"></div>
+                <div class="skeleton-cell" style="width: 140px;"></div>
+                <div class="skeleton-cell" style="width: 100px;"></div>
+                <div class="skeleton-cell" style="width: 80px;"></div>
+                <div class="skeleton-cell" style="width: 90px;"></div>
+                <div class="skeleton-cell" style="width: 100px;"></div>
+                <div class="skeleton-cell" style="width: 80px;"></div>
+              </div>
+              <div class="skeleton-row">
+                <div class="skeleton-cell" style="width: 120px;"></div>
+                <div class="skeleton-cell" style="width: 120px;"></div>
+                <div class="skeleton-cell" style="width: 140px;"></div>
+                <div class="skeleton-cell" style="width: 100px;"></div>
+                <div class="skeleton-cell" style="width: 80px;"></div>
+                <div class="skeleton-cell" style="width: 90px;"></div>
+                <div class="skeleton-cell" style="width: 100px;"></div>
+                <div class="skeleton-cell" style="width: 80px;"></div>
+              </div>
+              <div class="skeleton-row">
+                <div class="skeleton-cell" style="width: 120px;"></div>
+                <div class="skeleton-cell" style="width: 120px;"></div>
+                <div class="skeleton-cell" style="width: 140px;"></div>
+                <div class="skeleton-cell" style="width: 100px;"></div>
+                <div class="skeleton-cell" style="width: 80px;"></div>
+                <div class="skeleton-cell" style="width: 90px;"></div>
+                <div class="skeleton-cell" style="width: 100px;"></div>
+                <div class="skeleton-cell" style="width: 80px;"></div>
+              </div>
+            </td>
+          </tr>
+        `;
+        
+        // Add loading state to summary
+        summary.classList.add('summary-loading');
+      }
+
+      function hideLoadingIndicator() {
+        const loadingIndicator = document.getElementById('returnsLoading');
+        const summary = document.getElementById('returnsSummary');
+        
+        loadingIndicator.style.display = 'none';
+        summary.classList.remove('summary-loading');
+      }
+
+      function updateTableOnly() {
         const formData = new FormData(filterForm);
         const query = new URLSearchParams(formData).toString();
 
+        // Show loading indicator
+        showLoadingIndicator();
+
         // Load same page but via AJAX
-       
-          fetch("<?php echo $_SERVER['PHP_SELF']; ?>?page=returns&" + query)
+        fetch("<?php echo $_SERVER['PHP_SELF']; ?>?page=returns&" + query)
+          .then(response => response.text())
+          .then(fullHTML => {
+            // Create a virtual DOM
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(fullHTML, "text/html");
 
-            .then(response => response.text())
-            .then(fullHTML => {
+            // Extract the returnsContainer content
+            const newContent = doc.querySelector("#returnsContainer").innerHTML;
 
-                // Create a virtual DOM
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(fullHTML, "text/html");
+            // Replace only the container
+            document.getElementById("returnsContainer").innerHTML = newContent;
 
-                // Extract the returnsContainer content
-                const newContent = doc.querySelector("#returnsContainer").innerHTML;
+            // Hide loading indicator
+            hideLoadingIndicator();
+          })
+          .catch(error => {
+            console.error('Error loading returns:', error);
+            hideLoadingIndicator();
+            
+            // Show error message
+            document.getElementById("returnsTableBody").innerHTML = `
+              <tr>
+                <td colspan="8" style="text-align: center; color: #dc3545; padding: 20px;">
+                  Error loading returns data. Please try again.
+                </td>
+              </tr>
+            `;
+          });
+      }
 
-                // Replace only the container
-                document.getElementById("returnsContainer").innerHTML = newContent;
-
-            });
-    }
-
-    // Trigger AJAX on change
-    document.querySelectorAll('.auto-submit').forEach(field => {
+      // Trigger AJAX on change
+      document.querySelectorAll('.auto-submit').forEach(field => {
         field.addEventListener('change', updateTableOnly);
+      });
+
     });
-
-});
-</script>
-
-
+  </script>
 </body>
 </html>
