@@ -359,35 +359,36 @@
   }
 
   // ---------- RETURN SALE FUNCTION ----------
-  function returnSale(saleId) {
-    if (confirm('Are you sure you want to return this sale? This will mark the sale as returned.')) {
-      const formData = new FormData();
-      formData.append('sale_id', saleId);
-      
-      fetch('modules/return_sale.php', {
-        method: 'POST',
-        body: formData
-      })
-        .then(r => r.text())
-        .then(text => {
-          console.log("Return sale response:", text);
-          let data;
-          try { data = JSON.parse(text); }
-          catch (e) { throw new Error("Not valid JSON: " + text); }
+ function returnSale(saleId) {
+  if (confirm('Are you sure you want to return this sale? This will mark the sale as returned.')) {
+    const formData = new FormData();
+    formData.append('sale_id', saleId);
+    
+    fetch('modules/return_sale.php', {
+      method: 'POST',
+      body: formData
+    })
+      .then(r => r.text())
+      .then(text => {
+        console.log("Return sale response:", text);
+        let data;
+        try { data = JSON.parse(text); }
+        catch (e) { throw new Error("Not valid JSON: " + text); }
 
-          if (data.success) {
-            alert("Sale returned successfully!");
-            location.reload();
-          } else {
-            alert("Error: " + (data.message || "Failed to return sale."));
-          }
-        })
-        .catch(err => {
-          console.error("Return sale error:", err);
-          alert("Error returning sale. Check console for details.");
-        });
-    }
+        if (data.success) {
+          alert("Sale returned successfully!");
+          // Only reload the sales table instead of the entire page
+          loadSales();
+        } else {
+          alert("Error: " + (data.message || "Failed to return sale."));
+        }
+      })
+      .catch(err => {
+        console.error("Return sale error:", err);
+        alert("Error returning sale. Check console for details.");
+      });
   }
+}
 
   // ---------- ROW MANAGEMENT ----------
   function productOptionsHtml() {
@@ -500,151 +501,151 @@
     document.querySelector('.topbar')?.classList.remove('disabled');
   }
 
-  // submit edit
-  function submitEditSale() {
-    const saleId = document.getElementById('editSaleId').value;
-    const saleDate = document.getElementById('editSaleDate').value;
-    const branchId = document.getElementById('editSaleBranch').value;
-    const productId = document.getElementById('editSaleProduct').value;
-    const qty = parseInt(document.getElementById('editSaleQty').value, 10);
-    const customerType = document.getElementById('editCustomerType').value;
+ function submitEditSale() {
+  const saleId = document.getElementById('editSaleId').value;
+  const saleDate = document.getElementById('editSaleDate').value;
+  const branchId = document.getElementById('editSaleBranch').value;
+  const productId = document.getElementById('editSaleProduct').value;
+  const qty = parseInt(document.getElementById('editSaleQty').value, 10);
+  const customerType = document.getElementById('editCustomerType').value;
 
-    if (!saleId || !saleDate || !branchId || !productId || !qty || qty < 1 || !customerType) {
-      alert('Please fill out all fields correctly.');
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('sale_id', saleId);
-    formData.append('sale_date', saleDate);
-    formData.append('branch_id', branchId);
-    formData.append('product_id', productId);
-    formData.append('quantity', qty);
-    formData.append('customer_type', customerType);
-
-    fetch('modules/edit_sale.php', {
-      method: 'POST',
-      body: formData
-    })
-      .then(r => r.text())
-      .then(text => {
-        let data;
-        try { data = JSON.parse(text); } catch(e) { throw new Error('Invalid JSON: ' + text); }
-        if (data.success) {
-          alert('Sale updated successfully');
-          closeEditSaleModal();
-          location.reload();
-        } else {
-          alert('Update failed: ' + (data.message || 'Unknown error'));
-        }
-      })
-      .catch(err => {
-        console.error('submitEditSale error', err);
-        alert('Failed to update sale: ' + err.message);
-      });
+  if (!saleId || !saleDate || !branchId || !productId || !qty || qty < 1 || !customerType) {
+    alert('Please fill out all fields correctly.');
+    return;
   }
 
-  function deleteSale(saleId) {
-    if (!confirm('Delete this sale? This will return the items to inventory.')) return;
+  const formData = new FormData();
+  formData.append('sale_id', saleId);
+  formData.append('sale_date', saleDate);
+  formData.append('branch_id', branchId);
+  formData.append('product_id', productId);
+  formData.append('quantity', qty);
+  formData.append('customer_type', customerType);
 
-    const formData = new FormData();
-    formData.append('sale_id', saleId);
-
-    fetch('modules/delete_sale.php', {
-      method: 'POST',
-      body: formData
-    })
-      .then(r => r.text())
-      .then(text => {
-        let data;
-        try { data = JSON.parse(text); } catch (e) { throw new Error('Invalid JSON: ' + text); }
-        if (data.success) {
-          alert('Sale deleted and inventory restored');
-          location.reload();
-        } else {
-          alert('Delete failed: ' + (data.message || 'Unknown'));
-        }
-      })
-      .catch(err => {
-        console.error('deleteSale error', err);
-        alert('Delete failed: ' + err.message);
-      });
-  }
-
-  // ---------- SAVE SALE (AJAX to record_sale.php) ----------
-  function saveSale() {
-    const saleDate = document.getElementById('saleDate').value;
-    const branchSelect = document.getElementById('saleBranch');
-    const customerType = document.getElementById('customerType').value;
-    const branchId = (USER_ROLE === 'shop' && USER_BRANCH_ID > 0)
-      ? USER_BRANCH_ID
-      : branchSelect.value;
-
-    if (!saleDate || !branchId || !customerType) {
-      alert("Please select date, branch, and customer type.");
-      return;
-    }
-
-    const rows = document.querySelectorAll('#saleItemsBody tr');
-    if (!rows.length) {
-      alert("Please add at least one item.");
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('sale_date', saleDate);
-    formData.append('branch_id', branchId);
-    formData.append('customer_type', customerType);
-
-    rows.forEach(row => {
-      const productId = row.querySelector('.product-select').value;
-      const qty       = row.querySelector('.qty-input').value;
-      const price     = row.querySelector('input[name="unit_price[]"]').value;
-
-      if (productId && qty > 0) {
-        formData.append('product_id[]', productId);
-        formData.append('quantity[]', qty);
-        formData.append('unit_price[]', price);
+  fetch('modules/edit_sale.php', {
+    method: 'POST',
+    body: formData
+  })
+    .then(r => r.text())
+    .then(text => {
+      let data;
+      try { data = JSON.parse(text); } catch(e) { throw new Error('Invalid JSON: ' + text); }
+      if (data.success) {
+        alert('Sale updated successfully');
+        closeEditSaleModal();
+        // Only reload the sales table instead of the entire page
+        loadSales();
+      } else {
+        alert('Update failed: ' + (data.message || 'Unknown error'));
       }
-    });
-
-    if (!formData.getAll('product_id[]').length) {
-      alert("Please select products and quantities.");
-      return;
-    }
-
-    setSaleButtonsEnabled(false);
-
-    fetch('modules/record_sale.php', {
-      method: 'POST',
-      body: formData
     })
-      .then(r => r.text())
-      .then(text => {
-        console.log("Record sale response:", text);
-        let data;
-        try { data = JSON.parse(text); }
-        catch (e) { 
-          setSaleButtonsEnabled(true); // ✅ re-enable
-          throw new Error("Not valid JSON: " + text); 
-        }
-        setSaleButtonsEnabled(true); // ✅ re-enable
+    .catch(err => {
+      console.error('submitEditSale error', err);
+      alert('Failed to update sale: ' + err.message);
+    });
+}
 
-        if (data.success) {
-          alert("Sale recorded successfully!");
-          closeSaleModal();
-          location.reload();
-        } else {
-          alert("Error: " + (data.message || "Failed to record sale."));
-        }
-      })
-      .catch(err => {
-        setSaleButtonsEnabled(true); // ✅ re-enable
-        console.error("Record sale error:", err);
-        alert("Error recording sale. Check console for details.");
-      });
+function deleteSale(saleId) {
+  if (!confirm('Delete this sale? This will return the items to inventory.')) return;
+
+  const formData = new FormData();
+  formData.append('sale_id', saleId);
+
+  fetch('modules/delete_sale.php', {
+    method: 'POST',
+    body: formData
+  })
+    .then(r => r.text())
+    .then(text => {
+      let data;
+      try { data = JSON.parse(text); } catch (e) { throw new Error('Invalid JSON: ' + text); }
+      if (data.success) {
+        alert('Sale deleted and inventory restored');
+        // Only reload the sales table instead of the entire page
+        loadSales();
+      } else {
+        alert('Delete failed: ' + (data.message || 'Unknown'));
+      }
+    })
+    .catch(err => {
+      console.error('deleteSale error', err);
+      alert('Delete failed: ' + err.message);
+    });
+}
+  // ---------- SAVE SALE (AJAX to record_sale.php) ----------
+function saveSale() {
+  const saleDate = document.getElementById('saleDate').value;
+  const branchSelect = document.getElementById('saleBranch');
+  const customerType = document.getElementById('customerType').value;
+  const branchId = (USER_ROLE === 'shop' && USER_BRANCH_ID > 0)
+    ? USER_BRANCH_ID
+    : branchSelect.value;
+
+  if (!saleDate || !branchId || !customerType) {
+    alert("Please select date, branch, and customer type.");
+    return;
   }
 
+  const rows = document.querySelectorAll('#saleItemsBody tr');
+  if (!rows.length) {
+    alert("Please add at least one item.");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('sale_date', saleDate);
+  formData.append('branch_id', branchId);
+  formData.append('customer_type', customerType);
+
+  rows.forEach(row => {
+    const productId = row.querySelector('.product-select').value;
+    const qty       = row.querySelector('.qty-input').value;
+    const price     = row.querySelector('input[name="unit_price[]"]').value;
+
+    if (productId && qty > 0) {
+      formData.append('product_id[]', productId);
+      formData.append('quantity[]', qty);
+      formData.append('unit_price[]', price);
+    }
+  });
+
+  if (!formData.getAll('product_id[]').length) {
+    alert("Please select products and quantities.");
+    return;
+  }
+
+  setSaleButtonsEnabled(false);
+
+  fetch('modules/record_sale.php', {
+    method: 'POST',
+    body: formData
+  })
+    .then(r => r.text())
+    .then(text => {
+      console.log("Record sale response:", text);
+      let data;
+      try { data = JSON.parse(text); }
+      catch (e) { 
+        setSaleButtonsEnabled(true); // ✅ re-enable
+        throw new Error("Not valid JSON: " + text); 
+      }
+      setSaleButtonsEnabled(true); // ✅ re-enable
+
+      if (data.success) {
+        alert("Sale recorded successfully!");
+        closeSaleModal();
+        // Only reload the sales table instead of the entire page
+        loadSales();
+      } else {
+        alert("Error: " + (data.message || "Failed to record sale."));
+      }
+    })
+    .catch(err => {
+      setSaleButtonsEnabled(true); 
+      console.error("Record sale error:", err);
+      alert("Error recording sale. Check console for details.");
+    });
+}
   function loadSales(page = 1) {
     const form = document.getElementById("filterForm");
     const formData = new FormData(form);
