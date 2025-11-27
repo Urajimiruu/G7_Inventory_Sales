@@ -27,7 +27,7 @@ $branchesRes = $conn->query("
 
 <div class="dashboard">
 
-  <!-- 🔍 Filters -->
+  <!-- Filters -->
   <form id="filterForm" class="filter-form">
       <div class="filters">
           <div class="filter-left">
@@ -56,7 +56,7 @@ $branchesRes = $conn->query("
       </div>
   </form>
 
-  <!-- 📋 Transfer Table -->
+  <!-- Transfer Table -->
   <div class="table-scroll" role="region" aria-label="Products table">
       <table class="vertical">
           <thead>

@@ -1,6 +1,6 @@
 <div class="dashboard">
 
-  <!-- 🔍 Filters -->
+  <!--Filters -->
   <form id="filterForm" class="filter-form">
     <div class="filters">
 
@@ -35,7 +35,7 @@
     </div>
   </form>
 
-  <!-- 📋 Table -->
+  <!-- Table -->
   <div class="table-scroll" role="region">
     <table class="vertical">
       <thead>
@@ -60,7 +60,7 @@
 </div>
 
 
-  <!-- 🧩 Restock Modal -->
+  <!-- Restock Modal -->
 <div id="restockModal" class="modal-overlay">
   <div class="modal-box">
     <h4 id="restockModalTitle">RESTOCK PRODUCT</h4>
@@ -81,7 +81,7 @@
         <input type="text" id="restockCurrentQty" name="current_qty" readonly>
       </div>
 
-      <!-- 🔢 New field: how many to add -->
+      <!-- New field: how many to add -->
       <div class="form-row">
         <label>Quantity to Add:</label>
         <input type="number" id="restockAddQty" name="add_qty" min="1" required>
@@ -168,15 +168,15 @@ document.addEventListener("DOMContentLoaded", loadMainInventory);
         }
 
         if (data.success) {
-          alert(`✅ Restocked ${addQty} of "${currentProduct}" successfully!`);
+          alert(`Restocked ${addQty} of "${currentProduct}" successfully!`);
           location.reload();
         } else {
-          alert("❌ Error: " + (data.message || "Unknown error"));
+          alert(" Error: " + (data.message || "Unknown error"));
         }
       })
       .catch(err => {
       console.error("Restock error:", err);
-      alert("❌ Failed to restock: " + err.message);
+      alert("Failed to restock: " + err.message);
     });
 
   }
