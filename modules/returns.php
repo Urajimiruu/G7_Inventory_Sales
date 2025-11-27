@@ -1,6 +1,7 @@
 <?php
 require_once "db_connection.php";
 
+
 if (!isset($_SESSION['user_id'])) {
   header("Location: index.php");
   exit;
@@ -328,7 +329,7 @@ if ($returnsRes && $returnsRes->num_rows > 0) {
             </div>
           </div>
         </form>
-
+<div id="returnsContainer">
         <!-- Returns Summary -->
         <div class="returns-summary">
           <div class="summary-item">
@@ -396,28 +397,44 @@ if ($returnsRes && $returnsRes->num_rows > 0) {
       </div>
     </div>
   </div>
+</div>
+ <script>
+document.addEventListener('DOMContentLoaded', function() {
 
-  <script>
-    // Auto-submit form when any filter changes
-    document.addEventListener('DOMContentLoaded', function() {
-      const filterForm = document.getElementById('filterForm');
-      const filterElements = document.querySelectorAll('.auto-submit');
-      
-      // Auto-submit on change
-      filterElements.forEach(element => {
-        element.addEventListener('change', function() {
-          filterForm.submit();
-        });
-      });
+    const filterForm = document.getElementById('filterForm');
 
-      // Auto-submit on date input (for better UX)
-      const dateInputs = document.querySelectorAll('input[type="date"]');
-      dateInputs.forEach(input => {
-        input.addEventListener('change', function() {
-          filterForm.submit();
-        });
-      });
+    function updateTableOnly() {
+        const formData = new FormData(filterForm);
+        const query = new URLSearchParams(formData).toString();
+
+        // Load same page but via AJAX
+       
+          fetch("<?php echo $_SERVER['PHP_SELF']; ?>?page=returns&" + query)
+
+            .then(response => response.text())
+            .then(fullHTML => {
+
+                // Create a virtual DOM
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(fullHTML, "text/html");
+
+                // Extract the returnsContainer content
+                const newContent = doc.querySelector("#returnsContainer").innerHTML;
+
+                // Replace only the container
+                document.getElementById("returnsContainer").innerHTML = newContent;
+
+            });
+    }
+
+    // Trigger AJAX on change
+    document.querySelectorAll('.auto-submit').forEach(field => {
+        field.addEventListener('change', updateTableOnly);
     });
-  </script>
+
+});
+</script>
+
+
 </body>
 </html>
