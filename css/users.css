@@ -99,7 +99,7 @@
 }
 
 .btn-warning {
-  background-color: #ffc107;
+  background-color: #ffc107 !important;
 }
 
 .btn-danger {
