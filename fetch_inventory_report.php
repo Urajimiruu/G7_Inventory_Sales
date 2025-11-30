@@ -31,7 +31,7 @@ if (strtolower($role) === 'shop' && $branchId > 0) {
     $params[] = $branchId;
 }
 
-// search
+// search filter
 if ($search !== '') {
     $where .= " AND (p.product_name LIKE ? OR b.branch_name LIKE ?) ";
     $types .= "ss";
@@ -53,7 +53,7 @@ if ($filterProduct !== '') {
 }
 
 /* ------------------------------------------
-   2. COUNT TOTAL ROWS
+   2. TOTAL ROW COUNT
 ------------------------------------------ */
 $countSql = "
     SELECT COUNT(*) AS total
@@ -72,7 +72,31 @@ $stmtCount->close();
 $totalPages = max(1, ceil($totalRows / $limit));
 
 /* ------------------------------------------
-   3. MAIN QUERY WITH LIMIT
+   3. GRAND TOTALS QUERY (NO LIMIT!)
+------------------------------------------ */
+$totalSql = "
+    SELECT 
+        SUM(bi.quantity) AS totalQty,
+        SUM(bi.quantity * p.cost_price) AS totalCost,
+        SUM(bi.quantity * p.selling_price) AS totalRevenue
+    FROM branchinventory bi
+    JOIN products p ON bi.product_id = p.product_id
+    JOIN branches b ON bi.branch_id = b.branch_id
+    $where
+";
+
+$stmtTotal = $conn->prepare($totalSql);
+if (!empty($params)) $stmtTotal->bind_param($types, ...$params);
+$stmtTotal->execute();
+$totals = $stmtTotal->get_result()->fetch_assoc();
+$stmtTotal->close();
+
+$grandQty     = (int)($totals['totalQty'] ?? 0);
+$grandCost    = (float)($totals['totalCost'] ?? 0);
+$grandRevenue = (float)($totals['totalRevenue'] ?? 0);
+
+/* ------------------------------------------
+   4. MAIN PAGINATED QUERY
 ------------------------------------------ */
 $sql = "
 SELECT 
@@ -111,19 +135,30 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 /* ------------------------------------------
-   4. OUTPUT TABLE ROWS
+   5. OUTPUT TABLE ROWS
 ------------------------------------------ */
+
 if ($result && $result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
+
         $branchName   = htmlspecialchars($row['branch_name'], ENT_QUOTES);
         $productName  = htmlspecialchars($row['product_name'], ENT_QUOTES);
         $unit         = htmlspecialchars($row['unit'], ENT_QUOTES);
-        $costPrice    = number_format((float)$row['cost_price'], 2);
-        $sellingPrice = number_format((float)$row['selling_price'], 2);
-        $qty          = (int)$row['quantity'];
-        $totalCost    = number_format((float)$row['total_cost'], 2);
-        $revenue      = number_format((float)$row['potential_revenue'], 2);
 
+        // raw values
+        $qty          = (int)$row['quantity'];
+        $costRaw      = (float)$row['cost_price'];
+        $sellRaw      = (float)$row['selling_price'];
+        $totalCostRaw = (float)$row['total_cost'];
+        $revenueRaw   = (float)$row['potential_revenue'];
+
+        // formatted
+        $costFmt      = number_format($costRaw, 2);
+        $sellFmt      = number_format($sellRaw, 2);
+        $totCostFmt   = number_format($totalCostRaw, 2);
+        $revFmt       = number_format($revenueRaw, 2);
+
+        // status
         if ($qty === 0) {
             $statusText  = 'No Stock';
             $statusClass = 'inv-no-stock';
@@ -140,11 +175,11 @@ if ($result && $result->num_rows > 0) {
             <td>{$branchName}</td>
             <td>{$productName}</td>
             <td>{$unit}</td>
-            <td class='right'>₱{$costPrice}</td>
-            <td class='right'>₱{$sellingPrice}</td>
+            <td class='right'>₱{$costFmt}</td>
+            <td class='right'>₱{$sellFmt}</td>
             <td class='right'>{$qty}</td>
-            <td class='right'>₱{$totalCost}</td>
-            <td class='right'>₱{$revenue}</td>
+            <td class='right'>₱{$totCostFmt}</td>
+            <td class='right'>₱{$revFmt}</td>
             <td>
                 <div class='inv-status'>
                     <span class='dot {$statusClass}'></span>
@@ -160,14 +195,13 @@ if ($result && $result->num_rows > 0) {
 $stmt->close();
 
 /* ------------------------------------------
-   5. PAGINATION ROW
+   6. PAGINATION OUTPUT
 ------------------------------------------ */
 echo "<tr><td colspan='8' style='text-align:center;'>";
 
 if ($totalPages > 1) {
     echo '<div class="pagination">';
 
-    // Prev
     if ($page > 1) {
         echo "<button class='btn btn-primary' onclick='loadInventory(" . ($page - 1) . ")'>Prev</button>";
     }
@@ -191,7 +225,6 @@ if ($totalPages > 1) {
         echo "<button class='btn btn-secondary' onclick='loadInventory($totalPages)'>$totalPages</button>";
     }
 
-    // Next
     if ($page < $totalPages) {
         echo "<button class='btn btn-primary' onclick='loadInventory(" . ($page + 1) . ")'>Next</button>";
     }
@@ -200,6 +233,21 @@ if ($totalPages > 1) {
 }
 
 echo "</td></tr>";
-echo "<!--PAGINATION-->"; // marker for JS to split
+
+/* ------------------------------------------
+   7. GRAND TOTAL PREVIEW (BOTTOM)
+------------------------------------------ */
+echo "
+<tr><td colspan='9' style='padding:0; border:none;'>
+    <div id='invTotalsData'
+         data-total-qty='{$grandQty}'
+         data-total-cost='{$grandCost}'
+         data-total-rev='{$grandRevenue}'>
+    </div>
+</td></tr>
+";
+
+echo "<!--PAGINATION-->";
 
 $conn->close();
+?>

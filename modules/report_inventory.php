@@ -57,8 +57,6 @@ $branchId = (int)($_SESSION['branch_id'] ?? 0);
 
   </div>
 
-
-
   <!-- Table -->
   <div class="table-scroll inv-report-table-wrapper">
     <table class="user-table inv-report-table">
@@ -80,56 +78,89 @@ $branchId = (int)($_SESSION['branch_id'] ?? 0);
       </tbody>
     </table>
   </div>
+
+  <div id="invReportPagination"></div>
+  <div id="invReportTotals"></div>
 </div>
 
 <script>
+
     let currentProfitPage = 1;
     const profitLimit = 50; // change this if you want more rows per page
-function loadInventory(page = 1) {
-    currentProfitPage = page;
 
-    const search  = document.getElementById('invSearch').value.trim();
-    const branch  = document.getElementById('filterBranch').value;
-    const product = document.getElementById('filterProduct').value;
-    const sort    = document.getElementById('sortStock').value;
+    function loadInventory(page = 1) {
+        currentProfitPage = page;
 
-    const params = new URLSearchParams({
-        search: search,
-        branch: branch,
-        product: product,
-        sort: sort,
-        page: page,
-        limit: profitLimit
-    });
+        const search  = document.getElementById('invSearch').value.trim();
+        const branch  = document.getElementById('filterBranch').value;
+        const product = document.getElementById('filterProduct').value;
+        const sort    = document.getElementById('sortStock').value;
 
-    fetch('fetch_inventory_report.php?' + params.toString())
-        .then(res => res.text())
-        .then(response => {
-            // response contains TABLE + PAGINATION (split by delimiter)
-            const [tableRows, paginationHtml] = response.split("<!--PAGINATION-->");
-            document.getElementById('invReportBody').innerHTML = tableRows;
-            document.getElementById('invReportPagination').innerHTML = paginationHtml;
+        const params = new URLSearchParams({
+            search: search,
+            branch: branch,
+            product: product,
+            sort: sort,
+            page: page,
+            limit: profitLimit
         });
-}
 
+        fetch('fetch_inventory_report.php?' + params.toString())
+            .then(res => res.text())
+            .then(response => {
+                // response contains TABLE + PAGINATION (split by delimiter)
+                const [tableRows, paginationHtml] = response.split("<!--PAGINATION-->");
+                document.getElementById('invReportBody').innerHTML = tableRows;
+                document.getElementById('invReportPagination').innerHTML = paginationHtml;
 
-// Placeholder for export logic
-function exportInventory() {
-    const search  = document.getElementById('invSearch').value.trim();
-    const branch  = document.getElementById('filterBranch').value;
-    const product = document.getElementById('filterProduct').value;
-    const sort    = document.getElementById('sortStock').value;
+                // Read totals embedded in the response
+                const tempDiv = document.createElement("div");
+                tempDiv.innerHTML = tableRows;
+                const totalsDiv = tempDiv.querySelector("#invTotalsData");
 
-    const params = new URLSearchParams({
-        search: search,
-        branch: branch,
-        product: product,
-        sort: sort
-    });
+                if (totalsDiv) {
+                    const totalQty  = totalsDiv.dataset.totalQty;
+                    const totalCost = parseFloat(totalsDiv.dataset.totalCost).toFixed(2);
+                    const totalRev  = parseFloat(totalsDiv.dataset.totalRev).toFixed(2);
 
-    // Open export in new tab
-    window.open('export_inventory_pdf.php?' + params.toString(), '_blank');
-}
+                    document.getElementById("invReportTotals").innerHTML = `
+                        <div class="inv-total-card-wrapper">
+                            <div class="inv-total-card">
+                                <b>Total Quantity</b><br>
+                                <span class="inv-total-number">${Number(totalQty).toLocaleString()}</span>
+                            </div>
+                            <div class="inv-total-card">
+                                <b>Total Cost</b><br>
+                                <span class="inv-total-number">₱${Number(totalCost).toLocaleString()}</span>
+                            </div>
+                            <div class="inv-total-card">
+                                <b>Potential Revenue</b><br>
+                                <span class="inv-total-number">₱${Number(totalRev).toLocaleString()}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+    }
 
-loadInventory();
+    // Placeholder for export logic
+    function exportInventory() {
+        const search  = document.getElementById('invSearch').value.trim();
+        const branch  = document.getElementById('filterBranch').value;
+        const product = document.getElementById('filterProduct').value;
+        const sort    = document.getElementById('sortStock').value;
+
+        const params = new URLSearchParams({
+            search: search,
+            branch: branch,
+            product: product,
+            sort: sort
+        });
+
+        // Open export in new tab
+        window.open('export_inventory_pdf.php?' + params.toString(), '_blank');
+    }
+
+    loadInventory();
+    
 </script>
