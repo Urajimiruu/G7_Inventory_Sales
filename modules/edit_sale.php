@@ -21,6 +21,26 @@ $newQty    = (int)($_POST['quantity'] ?? 0);
 $newCustomerType = $_POST['customer_type'] ?? '';
 $allowedTypes = ['Regular', 'Senior', 'PWD'];
 
+// Fetch selling price of new product
+$priceStmt = $conn->prepare("SELECT selling_price FROM products WHERE product_id = ?");
+$priceStmt->bind_param("i", $newProd);
+$priceStmt->execute();
+$priceStmt->bind_result($sellingPriceRaw);
+$priceStmt->fetch();
+$priceStmt->close();
+
+if (!$sellingPriceRaw) {
+    echo json_encode(['success' => false, 'message' => 'Product price not found']);
+    exit;
+}
+
+// Compute final unit_price based on customer type
+$finalUnitPrice = (float)$sellingPriceRaw;
+if ($newCustomerType === 'Senior' || $newCustomerType === 'PWD') {
+    $finalUnitPrice = $finalUnitPrice * 0.8; // 20% discount
+}
+
+
 if (!in_array($newCustomerType, $allowedTypes)) {
     echo json_encode(['success' => false, 'message' => 'Invalid customer type']);
     exit;
@@ -131,12 +151,13 @@ try {
             product_id = ?, 
             sale_date = ?, 
             quantity = ?, 
-            customer_type = ?
+            customer_type = ?,
+            unit_price = ?
         WHERE sale_id = ?
     ";
 
     $ust = $conn->prepare($updateSql);
-    $ust->bind_param("isisi", $newProd, $saleDate, $newQty, $newCustomerType, $saleId);
+    $ust->bind_param("isissd", $newProd, $saleDate, $newQty, $newCustomerType, $finalUnitPrice, $saleId);
 
     if (!$ust->execute()) {
         throw new Exception('Failed to update sale: ' . $ust->error);

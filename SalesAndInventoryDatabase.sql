@@ -14,6 +14,7 @@ CREATE TABLE Users (
     password_hash VARCHAR(255) NOT NULL,
     role ENUM('admin', 'shop') NOT NULL,
     branch_id INT NULL,
+    phone_number VARCHAR(20),
     FOREIGN KEY (branch_id) REFERENCES Branches(branch_id)
 );
 
@@ -58,6 +59,10 @@ CREATE TABLE Sales (
     product_id INT NOT NULL,
     sale_date DATE DEFAULT (CURRENT_DATE),
     quantity INT NOT NULL,
+    status ENUM('admin', 'shop') DEFAULT 'active',
+    return_date DATE NULL,
+    customer_type ENUM('Regular', 'Senior', 'PWD') DEFAULT 'Regular',
+    unit_price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
     FOREIGN KEY (branch_id) REFERENCES Branches(branch_id),
     FOREIGN KEY (product_id) REFERENCES Products(product_id)
 );

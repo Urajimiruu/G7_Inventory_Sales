@@ -1128,14 +1128,21 @@
     let grand = 0;
 
     rows.forEach(r => {
-      grand += r.line_total;
+      let unit = Number(r.unit_price);
+      if (r.customer_type === "Senior" || r.customer_type === "PWD") {
+          unit = unit * 0.80;
+      }
+
+      const lineTotal = unit * r.quantity;
+      grand += lineTotal;
+
       tbody.insertAdjacentHTML('beforeend', `
         <tr data-product-id="${r.product_id}">
           <td>${escapeHtml(r.product_name)}</td>
-          <td class="right">₱${Number(r.unit_price).toFixed(2)}</td>
+          <td class="right">₱${unit.toFixed(2)}</td>
           <td class="right">${r.quantity}</td>
           <td class="right">${escapeHtml(r.customer_type)}</td>
-          <td class="right">₱${Number(r.line_total).toFixed(2)}</td>
+          <td class="right">₱${lineTotal.toFixed(2)}</td>
         </tr>
       `);
     });
@@ -1228,10 +1235,14 @@
     fd.append('branch_id', branchId);
 
     rows.forEach(r => {
-      fd.append('product_id[]', r.product_id);
-      fd.append('quantity[]', r.quantity);
-      fd.append('unit_price[]', r.unit_price);
-      fd.append('customer_type[]', r.customer_type);
+        let unit = Number(r.unit_price);
+        if (r.customer_type === "Senior" || r.customer_type === "PWD") {
+            unit = unit * 0.80;
+        }
+        fd.append('product_id[]', r.product_id);
+        fd.append('quantity[]', r.quantity);
+        fd.append('unit_price[]', unit);      // <-- send discounted!
+        fd.append('customer_type[]', r.customer_type);
     });
 
     fetch('modules/import_sales.php', {
