@@ -122,9 +122,10 @@ $branchesRes = $conn->query("
         </div>
 
         <div class="modal-buttons">
-          <button type="button" class="btn btn-primary" onclick="saveTransfer()">Confirm</button>
-          <button type="button" class="btn btn-danger" onclick="closeTransferModal()">Cancel</button>
+          <button type="button" id="transferConfirmBtn" class="btn btn-primary" onclick="saveTransfer()">Confirm</button>
+          <button type="button" id="transferCancelBtn" class="btn btn-danger" onclick="closeTransferModal()">Cancel</button>
         </div>
+
       </form>
     </div>
   </div>
@@ -244,6 +245,9 @@ function loadTransfers(page = 1) {
     formData.append('quantity', qty);
     formData.append('date', date);
 
+    // Disable buttons + loading cursor
+    setTransferButtonsEnabled(false);
+
     fetch('modules/transfer_stock.php', {
       method: 'POST',
       body: formData
@@ -265,9 +269,27 @@ function loadTransfers(page = 1) {
       .catch(err => {
         console.error('Transfer error:', err);
         alert('Transfer failed. Check console for details.');
+      })
+      .finally(() => {
+        // Always re-enable buttons
+        setTransferButtonsEnabled(true);
       });
   }
 
+  function setTransferButtonsEnabled(enabled) {
+      const confirmBtn = document.getElementById('transferConfirmBtn');
+      const cancelBtn  = document.getElementById('transferCancelBtn');
+
+      if (enabled) {
+          confirmBtn.disabled = false;
+          cancelBtn.disabled = false;
+          document.body.style.cursor = 'default';
+      } else {
+          confirmBtn.disabled = true;
+          cancelBtn.disabled = true;
+          document.body.style.cursor = 'wait';
+      }
+  }
 
 
 </script>

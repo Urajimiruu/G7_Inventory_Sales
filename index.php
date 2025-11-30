@@ -180,9 +180,23 @@ function verifyOTP() {
     if (data.toLowerCase().includes("verified") || data.toLowerCase().includes("success")) {
         messageBox.style.color = "green";
         setTimeout(() => { 
+            // Hide OTP modal
             document.getElementById("otpModal").style.display = "none";
-            window.location.href = "redirect.php"; 
-        }, 1200);
+
+            // Insert "Logging in..." message
+            const loginBox = document.querySelector(".login-box");
+            if (loginBox) {
+                loginBox.innerHTML = `
+                    <h2 style="text-align:center; margin-top:20px;">Logging in...</h2>
+                `;
+            }
+
+            // Redirect after short delay
+            setTimeout(() => {
+                window.location.href = "redirect.php";
+            }, 800);
+
+        }, 800);
     } else {
           messageBox.style.color = "red";
         }

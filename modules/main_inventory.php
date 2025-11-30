@@ -88,9 +88,10 @@
       </div>
 
       <div class="modal-buttons">
-        <button type="button" class="btn btn-primary" onclick="saveRestock()">Confirm</button>
-        <button type="button" class="btn btn-danger" onclick="closeRestockModal()">Cancel</button>
+        <button type="button" id="restockConfirmBtn" class="btn btn-primary" onclick="saveRestock()">Confirm</button>
+        <button type="button" id="restockCancelBtn" class="btn btn-danger" onclick="closeRestockModal()">Cancel</button>
       </div>
+
     </form>
   </div>
 </div>
@@ -131,7 +132,7 @@
 //     });
 // }
 
-document.addEventListener("DOMContentLoaded", loadMainInventory);
+  document.addEventListener("DOMContentLoaded", loadMainInventory);
 
   function saveRestock() {
     const addQty = parseInt(document.getElementById('restockAddQty').value, 10);
@@ -144,6 +145,8 @@ document.addEventListener("DOMContentLoaded", loadMainInventory);
     const formData = new FormData();
     formData.append('itemid', currentItemId);
     formData.append('add_qty', addQty);
+
+    setRestockButtonsEnabled(false);
 
     fetch('modules/restock_product.php', {
       method: 'POST',
@@ -175,41 +178,59 @@ document.addEventListener("DOMContentLoaded", loadMainInventory);
         }
       })
       .catch(err => {
-      console.error("Restock error:", err);
-      alert("Failed to restock: " + err.message);
-    });
-
+        console.error("Restock error:", err);
+        alert("Failed to restock: " + err.message);
+      })
+      .finally(() => {
+          // always re-enable buttons and restore cursor
+          setRestockButtonsEnabled(true);
+      });
   }
 
+  function setRestockButtonsEnabled(enabled) {
+    const confirmBtn = document.getElementById('restockConfirmBtn');
+    const cancelBtn  = document.getElementById('restockCancelBtn');
 
-let currentPage = 1;
-const PAGE_LIMIT = 10;
+    if (enabled) {
+        confirmBtn.disabled = false;
+        cancelBtn.disabled = false;
+        document.body.style.cursor = "default";
+    } else {
+        confirmBtn.disabled = true;
+        cancelBtn.disabled = true;
+        document.body.style.cursor = "wait";
+    }
+  }
 
-function buildQueryParams(page = 1) {
+  let currentPage = 1;
+  const PAGE_LIMIT = 10;
+
+  function buildQueryParams(page = 1) {
+      const form = document.getElementById("filterForm");
+      const formData = new FormData(form);
+      const params = new URLSearchParams(formData);
+
+      params.set("page", page);
+      params.set("limit", PAGE_LIMIT);
+      return params.toString();
+  }
+
+  function loadMainInventory(page = 1) {
     const form = document.getElementById("filterForm");
     const formData = new FormData(form);
+    formData.append('page', page); // send current page
     const params = new URLSearchParams(formData);
 
-    params.set("page", page);
-    params.set("limit", PAGE_LIMIT);
-    return params.toString();
-}
+    fetch("modules/list_main_inventory.php?" + params.toString())
+      .then(res => res.text())
+      .then(html => {
+          document.getElementById("mainInvBody").innerHTML = html;
+      })
+      .catch(err => {
+          console.error("Error loading inventory:", err);
+          document.getElementById("mainInvBody").innerHTML = 
+            "<tr><td colspan='6' style='text-align:center;'>Error loading data</td></tr>";
+      });
+  }
 
-function loadMainInventory(page = 1) {
-  const form = document.getElementById("filterForm");
-  const formData = new FormData(form);
-  formData.append('page', page); // send current page
-  const params = new URLSearchParams(formData);
-
-  fetch("modules/list_main_inventory.php?" + params.toString())
-    .then(res => res.text())
-    .then(html => {
-        document.getElementById("mainInvBody").innerHTML = html;
-    })
-    .catch(err => {
-        console.error("Error loading inventory:", err);
-        document.getElementById("mainInvBody").innerHTML = 
-          "<tr><td colspan='6' style='text-align:center;'>Error loading data</td></tr>";
-    });
-}
 </script>
