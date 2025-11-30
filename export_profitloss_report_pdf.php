@@ -24,14 +24,24 @@ $sql = "
 SELECT 
     b.branch_name,
     p.product_name,
+
     SUM(s.quantity) AS total_sold,
-    SUM(s.quantity * p.selling_price) AS total_sales,
+
+    -- Correct sales: use the unit_price saved per sale
+    SUM(s.quantity * s.unit_price) AS total_sales,
+
+    -- Correct cost from products table
     SUM(s.quantity * p.cost_price) AS total_cost,
-    (SUM(s.quantity * p.selling_price) - SUM(s.quantity * p.cost_price)) AS profit
+
+    -- Correct profit or loss
+    (SUM(s.quantity * s.unit_price) - SUM(s.quantity * p.cost_price)) AS profit
+
 FROM Sales s
 JOIN Products p ON s.product_id = p.product_id
 JOIN Branches b ON s.branch_id = b.branch_id
-WHERE s.status != 'returned'
+
+-- Correct filter for returned items
+WHERE s.status = 'active'
 ";
 
 $params = [];

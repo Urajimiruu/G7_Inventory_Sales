@@ -27,7 +27,7 @@ $offset  = ($page - 1) * $limit;
 $params = [];
 $types  = "";
 
-$whereClauses = " WHERE 1=1 ";
+$whereClauses = " WHERE s.status = 'active' ";
 
 // role restriction
 if (strtolower($role) === 'shop') {
@@ -71,15 +71,15 @@ if ($view === 'detailed') {
 
     $sql = "
     SELECT 
-      s.sale_date,
-      s.quantity,
-      b.branch_name,
-      p.product_name,
-      p.selling_price,
-      p.cost_price,
-      (s.quantity * p.selling_price) AS total_sales,
-      (s.quantity * p.cost_price) AS total_cost,
-      ((p.selling_price - p.cost_price) * s.quantity) AS profit
+    s.sale_date,
+    s.quantity,
+    b.branch_name,
+    p.product_name,
+    s.unit_price AS selling_price,
+    p.cost_price,
+    (s.quantity * s.unit_price) AS total_sales,
+    (s.quantity * p.cost_price) AS total_cost,
+    ((s.unit_price - p.cost_price) * s.quantity) AS profit
     FROM Sales s
     JOIN Products p ON s.product_id = p.product_id
     JOIN Branches b ON s.branch_id = b.branch_id
@@ -153,9 +153,9 @@ else {
           b.branch_name,
           p.product_name,
           SUM(s.quantity) AS total_qty,
-          SUM(s.quantity * p.selling_price) AS total_sales,
+          SUM(s.quantity * s.unit_price) AS total_sales,
           SUM(s.quantity * p.cost_price) AS total_cost,
-          SUM((p.selling_price - p.cost_price) * s.quantity) AS profit
+          SUM((s.unit_price - p.cost_price) * s.quantity) AS profit
         FROM Sales s
         JOIN Products p ON s.product_id = p.product_id
         JOIN Branches b ON s.branch_id = b.branch_id
@@ -168,9 +168,9 @@ else {
           b.branch_name,
           p.product_name,
           SUM(s.quantity) AS total_qty,
-          SUM(s.quantity * p.selling_price) AS total_sales,
+          SUM(s.quantity * s.unit_price) AS total_sales,
           SUM(s.quantity * p.cost_price) AS total_cost,
-          SUM((p.selling_price - p.cost_price) * s.quantity) AS profit
+          SUM((s.unit_price - p.cost_price) * s.quantity) AS profit
         FROM Sales s
         JOIN Products p ON s.product_id = p.product_id
         JOIN Branches b ON s.branch_id = b.branch_id
@@ -245,6 +245,34 @@ else {
     $stmt->close();
 }
 
+/* ----------------------------------------------
+   GRAND TOTALS (based only on filters, NOT pagination)
+---------------------------------------------- */
+$totalsSql = "
+    SELECT
+        SUM(s.quantity) AS total_qty,
+        SUM(s.quantity * s.unit_price) AS total_sales,
+        SUM(s.quantity * p.cost_price) AS total_cost,
+        SUM((s.unit_price - p.cost_price) * s.quantity) AS total_profit
+    FROM sales s
+    JOIN products p ON s.product_id = p.product_id
+    JOIN branches b ON s.branch_id = b.branch_id
+    $whereClauses
+      AND s.status = 'active'
+";
+
+$stmtTotals = $conn->prepare($totalsSql);
+if (!empty($params)) $stmtTotals->bind_param($types, ...$params);
+$stmtTotals->execute();
+$gt = $stmtTotals->get_result()->fetch_assoc();
+$stmtTotals->close();
+
+$grandQty    = (int)($gt['total_qty'] ?? 0);
+$grandSales  = (float)($gt['total_sales'] ?? 0);
+$grandCost   = (float)($gt['total_cost'] ?? 0);
+$grandProfit = (float)($gt['total_profit'] ?? 0);
+
+
 ///////////////////////////////////////////////////////////////////
 // PAGINATION FOOTER
 ///////////////////////////////////////////////////////////////////
@@ -285,6 +313,23 @@ if ($totalPages > 1) {
 }
 
 echo "</td></tr>";
+
+/* ----------------------------------------------
+   OUTPUT HIDDEN GRAND TOTALS BLOCK
+---------------------------------------------- */
+echo "
+<tr>
+    <td colspan='10' style='padding:0; border:none;'>
+        <div id='salesTotalsData'
+             data-total-qty='{$grandQty}'
+             data-total-sales='{$grandSales}'
+             data-total-cost='{$grandCost}'
+             data-total-profit='{$grandProfit}'>
+        </div>
+    </td>
+</tr>
+";
+
 
 $conn->close();
 ?>

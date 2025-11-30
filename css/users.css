@@ -658,6 +658,45 @@
   border-color: #007bff;
 }
 
+.sales-total-card {
+    margin-top: 15px;
+    padding: 15px 20px;
+    background: #f8f9fa;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.sales-total-card b {
+    font-size: 1rem;
+}
+
+.sales-total-card-wrapper {
+    display: flex;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.sales-total-card {
+    flex: 1;
+    background: white;
+    padding: 18px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.sales-total-number {
+    font-size: 1.6rem;  /* bigger numbers */
+    font-weight: 700;   /* bold */
+    margin-top: 5px;
+    display: inline-block;
+    color: #12123b;
+}
+
 
 /* ===============================
    PROFIT & LOSS REPORT STYLING
@@ -801,6 +840,48 @@
 .pl-loss-dot {
   background-color: #dc3545;
 }
+
+
+.pl-total-card {
+    margin-top: 15px;
+    padding: 15px 20px;
+    background: #f8f9fa;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.pl-total-card b {
+    font-size: 1rem;
+}
+
+.pl-total-card-wrapper {
+    display: flex;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.pl-total-card {
+    flex: 1;
+    background: white;
+    padding: 18px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.pl-total-number {
+    font-size: 1.6rem;  /* bigger numbers */
+    font-weight: 700;   /* bold */
+    margin-top: 5px;
+    display: inline-block;
+    color: #12123b;
+}
+
+
 
 .pagination {
     margin-top: 12px;

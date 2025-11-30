@@ -87,6 +87,8 @@ $branchId = (int)($_SESSION['branch_id'] ?? 0);
     </table>
   </div>
 
+  <div id="salesReportTotals"></div>
+
 </div>
 
 <script>
@@ -175,9 +177,47 @@ function loadSales(page = 1) {
     fetch("fetch_sales_report.php?" + paramsToQuery(params))
         .then(res => res.text())
         .then(html => {
+
+            // 1. Insert rows into table
             document.getElementById("saleReportBody").innerHTML = html;
+
+            // 2. Extract totals from the response
+            const temp = document.createElement("div");
+            temp.innerHTML = html;
+            const totals = temp.querySelector("#salesTotalsData");
+
+            if (totals) {
+                const qty    = Number(totals.dataset.totalQty);
+                const sales  = Number(totals.dataset.totalSales);
+                const cost   = Number(totals.dataset.totalCost);
+                const profit = Number(totals.dataset.totalProfit);
+
+                document.getElementById("salesReportTotals").innerHTML = `
+                    <div class="sales-total-card-wrapper">
+                        <div class="sales-total-card">
+                          <b>Total Qty</b><br>
+                          <span class="inv-total-number">${qty.toLocaleString()}</span>
+                        </div>
+                        <div class="sales-total-card">
+                          <b>Total Sales</b><br>
+                          <span class="inv-total-number">₱${sales.toLocaleString()}</span>
+                        </div>
+                        <div class="sales-total-card">
+                          <b>Total Cost</b><br>
+                          <span class="inv-total-number">₱${cost.toLocaleString()}</span>
+                        </div>
+                        <div class="sales-total-card">
+                          <b>Total Profit</b><br>
+                          <span class="inv-total-number">₱${profit.toLocaleString()}</span>
+                        </div>
+                    </div>
+                `;
+            } else {
+                document.getElementById("salesReportTotals").innerHTML = "";
+            }
         })
         .catch(err => {
+            console.error(err);
             document.getElementById("saleReportBody").innerHTML =
                 '<tr><td colspan="10" style="text-align:center;">Request failed</td></tr>';
         });

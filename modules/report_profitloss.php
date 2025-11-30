@@ -77,6 +77,10 @@ $branchId = (int)($_SESSION['branch_id'] ?? 0);
       </tbody>
     </table>
   </div>
+
+  <div id="profitLossPagination"></div>
+  <div id="profitLossTotals"></div>
+
 </div>
 
 <script>
@@ -101,13 +105,48 @@ function loadProfitLoss(page = 1) {
     });
 
     fetch('fetch_profitloss_report.php?' + params.toString())
-        .then(res => res.text())
-        .then(response => {
-            // response contains TABLE + PAGINATION (split by delimiter)
-            const [tableRows, paginationHtml] = response.split("<!--PAGINATION-->");
-            document.getElementById('profitLossBody').innerHTML = tableRows;
-            document.getElementById('profitLossPagination').innerHTML = paginationHtml;
-        });
+    .then(res => res.text())
+    .then(response => {
+
+        const [tableRows, paginationHtml] = response.split("<!--PAGINATION-->");
+
+        document.getElementById('profitLossBody').innerHTML = tableRows;
+        document.getElementById('profitLossPagination').innerHTML = paginationHtml;
+
+        // Read totals
+        const temp = document.createElement("div");
+        temp.innerHTML = tableRows;
+        const totals = temp.querySelector("#profitLossTotalsData");
+
+        if (totals) {
+            const qty    = Number(totals.dataset.totalQty);
+            const sales  = Number(totals.dataset.totalSales);
+            const cost   = Number(totals.dataset.totalCost);
+            const profit = Number(totals.dataset.totalProfit);
+
+            document.getElementById("profitLossTotals").innerHTML = `
+                <div class="pl-total-card-wrapper">
+                    <div class="pl-total-card">
+                        <b>Total Qty Sold</b><br>
+                        <span class="inv-total-number">${qty.toLocaleString()}</span>
+                    </div>
+                    <div class="pl-total-card">
+                        <b>Total Sales</b><br>
+                        <span class="inv-total-number">₱${sales.toLocaleString()}</span>
+                    </div>
+                    <div class="pl-total-card">
+                        <b>Total Cost</b><br>
+                        <span class="inv-total-number">₱${cost.toLocaleString()}</span>
+                    </div>
+                    <div class="pl-total-card">
+                        <b>Total Profit</b><br>
+                        <span class="inv-total-number">₱${profit.toLocaleString()}</span>
+                    </div>
+                </div>
+            `;
+        }
+    });
+
 }
 
 // Export with same filters

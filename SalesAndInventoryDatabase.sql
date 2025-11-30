@@ -59,7 +59,7 @@ CREATE TABLE Sales (
     product_id INT NOT NULL,
     sale_date DATE DEFAULT (CURRENT_DATE),
     quantity INT NOT NULL,
-    status ENUM('admin', 'shop') DEFAULT 'active',
+    status ENUM('active', 'returned') DEFAULT 'active',
     return_date DATE NULL,
     customer_type ENUM('Regular', 'Senior', 'PWD') DEFAULT 'Regular',
     unit_price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
