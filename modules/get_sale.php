@@ -17,7 +17,7 @@ if ($saleId <= 0) {
     exit;
 }
 
-$sql = "SELECT sale_id, sale_date, product_id, branch_id, quantity, status FROM sales WHERE sale_id = ?";
+$sql = "SELECT sale_id, sale_date, product_id, branch_id, quantity, customer_type, status FROM sales WHERE sale_id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $saleId);
 $stmt->execute();

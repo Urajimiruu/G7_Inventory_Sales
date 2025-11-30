@@ -58,4 +58,7 @@
       notifOpen = false;
     }
   });
+
+  document.addEventListener("DOMContentLoaded", loadNotifications);
+
 </script>

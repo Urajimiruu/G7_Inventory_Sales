@@ -859,6 +859,76 @@ canvas {
 }
 
 
+/* Import Sale Modal */
+.import-sale-box {
+  width: 750px !important;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 25px 35px;
+}
+
+/* Bigger centered title */
+.import-sale-box h4 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 22px;
+}
+
+/* Better spacing + alignment for fields */
+.import-sale-box .form-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+/* Wider labels for alignment */
+.import-sale-box .form-row label {
+  width: 100px;
+  text-align: right;
+  margin-right: 12px;
+}
+
+/* Make inputs/selects stretch properly */
+.import-sale-box input[type="date"],
+.import-sale-box select {
+  width: 260px;
+  height: 34px;
+}
+
+/* Items table scroll area */
+.import-sale-box .table-scroll {
+  width: 100%;
+  margin-top: 6px;
+  overflow-x: auto;
+}
+
+.import-sale-box table {
+  width: 100%;
+  min-width: 650px;
+}
+
+/* Bottom row alignment */
+.import-sale-box .sale-bottom-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+}
+
+/* Buttons row spacing */
+.import-sale-box .modal-buttons {
+  margin-top: 22px !important;
+}
+
+/* Only affect Date, Branch, Customer Type */
+.import-sale-box .import-sale-field input[type="date"],
+.import-sale-box .import-sale-field select {
+  width: 550px;
+  height: 34px;
+}
+
+
 /* Edit Sale Modal */
 .edit-sale-overlay {
   /* inherits modal-overlay base styles */

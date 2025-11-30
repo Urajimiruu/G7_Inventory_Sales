@@ -208,7 +208,15 @@
 
       <div class="filter-right">
         <button type="button" class="btn btn-primary" onclick="openSaleModal()">Record Sale</button>
+
+        <!-- IMPORT BUTTON -->
+        <button type="button" id="openImportBtn" class="btn btn-secondary" style="margin-left:8px;">
+          Import Sales
+        </button>
+        <!-- hidden file input -->
+        <input type="file" id="importFileInput" accept=".xls,.xlsx" style="display:none;" />
       </div>
+
     </div>
   </form>
 
@@ -328,7 +336,7 @@
 
         <div class="form-row edit-sale-field">
           <label for="editSaleBranch">Branch:</label>
-          <select id="editSaleBranch" name="branch_id" required>
+          <select id="editSaleBranch" name="branch_id" disabled>
             <option value="">Select Branch</option>
             <?php foreach ($branches as $b): ?>
               <option value="<?= (int)$b['branch_id'] ?>"><?= htmlspecialchars($b['branch_name'], ENT_QUOTES, 'UTF-8') ?></option>
@@ -361,14 +369,81 @@
         </div>
 
         <div class="modal-buttons">
-          <button type="button" class="btn btn-primary" onclick="submitEditSale()">Save changes</button>
+          <button type="button" class="btn btn-primary" onclick="submitEditSale()">Save Changes</button>
           <button type="button" class="btn btn-danger" onclick="closeEditSaleModal()">Cancel</button>
         </div>
       </form>
     </div>
   </div>
 
+  <!-- Import Sales Modal -->
+  <div id="importModal" class="modal-overlay import-sale-overlay">
+    <div class="modal-box import-sale-box" style="max-width:900px;">
+      <h4 class="import-sale-title">IMPORT SALES</h4>
+
+      <form id="importForm" onsubmit="return false;">
+        <div class="form-row import-sale-field">
+          <label for="importDate">Date:</label>
+          <input type="date" id="importDate" name="sale_date" required>
+        </div>
+
+        <div class="form-row import-sale-field">
+          <label for="importBranch">Branch:</label>
+          <select id="importBranch" name="branch_id" required <?= ($role === 'shop' && $branchId > 0) ? 'disabled' : '' ?>>
+            <option value="">Select Branch</option>
+            <?php foreach ($branches as $b): ?>
+              <option value="<?= (int)$b['branch_id'] ?>"
+                <?= ($role === 'shop' && $branchId == $b['branch_id']) ? 'selected' : '' ?>>
+                <?= htmlspecialchars($b['branch_name'], ENT_QUOTES, 'UTF-8') ?>
+              </option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+
+        <div class="form-row import-sale-field">
+          <label>Items:</label>
+        </div>
+
+        <!-- Parsed rows table -->
+        <div class="form-row">
+          <div class="table-scroll" style="max-height:320px;">
+            <table class="vertical" id="importItemsTable">
+              <thead>
+                <tr>
+                  <th>Product Name</th>
+                  <th class="right">Unit Price</th>
+                  <th class="right">Quantity</th>
+                  <th class="right">Customer Type</th>
+                  <th class="right">Line Total</th>
+                </tr>
+              </thead>
+              <tbody id="importItemsBody">
+                <!-- populated by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="sale-bottom-row" style="margin-top:12px;">
+          <div></div>
+          <div>
+            <strong>Grand Total: ₱<span id="importGrandTotal">0.00</span></strong>
+          </div>
+        </div>
+
+        <div class="modal-buttons" style="margin-top:15px;">
+          <button type="button" id="importConfirmBtn" class="btn btn-primary" onclick="confirmImport()">Confirm Import</button>
+          <button type="button" id="importCancelBtn" class="btn btn-danger" onclick="closeImportModal()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
 </div>
+
+<!-- SheetJS -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <script>
   // ---------- JS DATA FROM PHP ----------
@@ -459,36 +534,36 @@
   }
 
   // ---------- RETURN SALE FUNCTION ----------
- function returnSale(saleId) {
-  if (confirm('Are you sure you want to return this sale? This will mark the sale as returned.')) {
-    const formData = new FormData();
-    formData.append('sale_id', saleId);
-    
-    fetch('modules/return_sale.php', {
-      method: 'POST',
-      body: formData
-    })
-      .then(r => r.text())
-      .then(text => {
-        console.log("Return sale response:", text);
-        let data;
-        try { data = JSON.parse(text); }
-        catch (e) { throw new Error("Not valid JSON: " + text); }
-
-        if (data.success) {
-          alert("Sale returned successfully!");
-          // Only reload the sales table instead of the entire page
-          loadSales();
-        } else {
-          alert("Error: " + (data.message || "Failed to return sale."));
-        }
+  function returnSale(saleId) {
+    if (confirm('Are you sure you want to return this sale? This will mark the sale as returned.')) {
+      const formData = new FormData();
+      formData.append('sale_id', saleId);
+      
+      fetch('modules/return_sale.php', {
+        method: 'POST',
+        body: formData
       })
-      .catch(err => {
-        console.error("Return sale error:", err);
-        alert("Error returning sale. Check console for details.");
-      });
+        .then(r => r.text())
+        .then(text => {
+          console.log("Return sale response:", text);
+          let data;
+          try { data = JSON.parse(text); }
+          catch (e) { throw new Error("Not valid JSON: " + text); }
+
+          if (data.success) {
+            alert("Sale returned successfully!");
+            // Only reload the sales table instead of the entire page
+            loadSales();
+          } else {
+            alert("Error: " + (data.message || "Failed to return sale."));
+          }
+        })
+        .catch(err => {
+          console.error("Return sale error:", err);
+          alert("Error returning sale. Check console for details.");
+        });
+    }
   }
-}
 
   // ---------- ROW MANAGEMENT ----------
   function productOptionsHtml() {
@@ -583,7 +658,7 @@
           document.getElementById('editSaleBranch').value = USER_BRANCH_ID;
           document.getElementById('editSaleBranch').disabled = true;
         } else {
-          document.getElementById('editSaleBranch').disabled = false;
+          document.getElementById('editSaleBranch').disabled = true;
           document.getElementById('editSaleBranch').value = sale.branch_id;
         }
 
@@ -601,151 +676,179 @@
     document.querySelector('.topbar')?.classList.remove('disabled');
   }
 
- function submitEditSale() {
-  const saleId = document.getElementById('editSaleId').value;
-  const saleDate = document.getElementById('editSaleDate').value;
-  const branchId = document.getElementById('editSaleBranch').value;
-  const productId = document.getElementById('editSaleProduct').value;
-  const qty = parseInt(document.getElementById('editSaleQty').value, 10);
-  const customerType = document.getElementById('editCustomerType').value;
+  function submitEditSale() {
+    const saleId = document.getElementById('editSaleId').value;
+    const saleDate = document.getElementById('editSaleDate').value;
+    const branchId = document.getElementById('editSaleBranch').value;
+    const productId = document.getElementById('editSaleProduct').value;
+    const qty = parseInt(document.getElementById('editSaleQty').value, 10);
+    const customerType = document.getElementById('editCustomerType').value;
 
-  if (!saleId || !saleDate || !branchId || !productId || !qty || qty < 1 || !customerType) {
-    alert('Please fill out all fields correctly.');
-    return;
-  }
-
-  const formData = new FormData();
-  formData.append('sale_id', saleId);
-  formData.append('sale_date', saleDate);
-  formData.append('branch_id', branchId);
-  formData.append('product_id', productId);
-  formData.append('quantity', qty);
-  formData.append('customer_type', customerType);
-
-  fetch('modules/edit_sale.php', {
-    method: 'POST',
-    body: formData
-  })
-    .then(r => r.text())
-    .then(text => {
-      let data;
-      try { data = JSON.parse(text); } catch(e) { throw new Error('Invalid JSON: ' + text); }
-      if (data.success) {
-        alert('Sale updated successfully');
-        closeEditSaleModal();
-        // Only reload the sales table instead of the entire page
-        loadSales();
-      } else {
-        alert('Update failed: ' + (data.message || 'Unknown error'));
-      }
-    })
-    .catch(err => {
-      console.error('submitEditSale error', err);
-      alert('Failed to update sale: ' + err.message);
-    });
-}
-
-function deleteSale(saleId) {
-  if (!confirm('Delete this sale? This will return the items to inventory.')) return;
-
-  const formData = new FormData();
-  formData.append('sale_id', saleId);
-
-  fetch('modules/delete_sale.php', {
-    method: 'POST',
-    body: formData
-  })
-    .then(r => r.text())
-    .then(text => {
-      let data;
-      try { data = JSON.parse(text); } catch (e) { throw new Error('Invalid JSON: ' + text); }
-      if (data.success) {
-        alert('Sale deleted and inventory restored');
-        // Only reload the sales table instead of the entire page
-        loadSales();
-      } else {
-        alert('Delete failed: ' + (data.message || 'Unknown'));
-      }
-    })
-    .catch(err => {
-      console.error('deleteSale error', err);
-      alert('Delete failed: ' + err.message);
-    });
-}
-  // ---------- SAVE SALE (AJAX to record_sale.php) ----------
-function saveSale() {
-  const saleDate = document.getElementById('saleDate').value;
-  const branchSelect = document.getElementById('saleBranch');
-  const customerType = document.getElementById('customerType').value;
-  const branchId = (USER_ROLE === 'shop' && USER_BRANCH_ID > 0)
-    ? USER_BRANCH_ID
-    : branchSelect.value;
-
-  if (!saleDate || !branchId || !customerType) {
-    alert("Please select date, branch, and customer type.");
-    return;
-  }
-
-  const rows = document.querySelectorAll('#saleItemsBody tr');
-  if (!rows.length) {
-    alert("Please add at least one item.");
-    return;
-  }
-
-  const formData = new FormData();
-  formData.append('sale_date', saleDate);
-  formData.append('branch_id', branchId);
-  formData.append('customer_type', customerType);
-
-  rows.forEach(row => {
-    const productId = row.querySelector('.product-select').value;
-    const qty       = row.querySelector('.qty-input').value;
-    const price     = row.querySelector('input[name="unit_price[]"]').value;
-
-    if (productId && qty > 0) {
-      formData.append('product_id[]', productId);
-      formData.append('quantity[]', qty);
-      formData.append('unit_price[]', price);
+    if (!saleId || !saleDate || !branchId || !productId || !qty || qty < 1 || !customerType) {
+      alert('Please fill out all fields correctly.');
+      return;
     }
-  });
 
-  if (!formData.getAll('product_id[]').length) {
-    alert("Please select products and quantities.");
-    return;
+    const formData = new FormData();
+    formData.append('sale_id', saleId);
+    formData.append('sale_date', saleDate);
+    formData.append('branch_id', branchId);
+    formData.append('product_id', productId);
+    formData.append('quantity', qty);
+    formData.append('customer_type', customerType);
+
+    setEditButtonsEnabled(false);
+
+    fetch('modules/edit_sale.php', {
+      method: 'POST',
+      body: formData
+    })
+      .then(r => r.text())
+      .then(text => {
+        let data;
+        try { 
+          data = JSON.parse(text); 
+        } 
+        catch(e) { 
+          setEditButtonsEnabled(true);
+          throw new Error('Invalid JSON: ' + text); 
+        }
+
+        setEditButtonsEnabled(true);
+
+        if (data.success) {
+          alert('Sale updated successfully');
+          closeEditSaleModal();
+          // Only reload the sales table instead of the entire page
+          loadSales();
+        } else {
+          alert('Update failed: ' + (data.message || 'Unknown error'));
+        }
+      })
+      .catch(err => {
+        setEditButtonsEnabled(true);
+        console.error('submitEditSale error', err);
+        alert('Failed to update sale: ' + err.message);
+      });
   }
 
-  setSaleButtonsEnabled(false);
+  function setEditButtonsEnabled(enabled) {
+      const saveBtn = document.querySelector('#editSaleModal .btn.btn-primary');
+      const cancelBtn = document.querySelector('#editSaleModal .btn.btn-danger');
 
-  fetch('modules/record_sale.php', {
-    method: 'POST',
-    body: formData
-  })
-    .then(r => r.text())
-    .then(text => {
-      console.log("Record sale response:", text);
-      let data;
-      try { data = JSON.parse(text); }
-      catch (e) { 
-        setSaleButtonsEnabled(true); 
-        throw new Error("Not valid JSON: " + text); 
-      }
-      setSaleButtonsEnabled(true); 
-
-      if (data.success) {
-        alert("Sale recorded successfully!");
-        closeSaleModal();
-        // Only reload the sales table instead of the entire page
-        loadSales();
+      if (enabled) {
+        if (saveBtn) saveBtn.disabled = false;
+        if (cancelBtn) cancelBtn.disabled = false;
+        document.body.style.cursor = "default";
       } else {
-        alert("Error: " + (data.message || "Failed to record sale."));
+        if (saveBtn) saveBtn.disabled = true;
+        if (cancelBtn) cancelBtn.disabled = true;
+        document.body.style.cursor = "wait";
       }
+  }
+
+  function deleteSale(saleId) {
+    if (!confirm('Delete this sale? This will return the items to inventory.')) return;
+
+    const formData = new FormData();
+    formData.append('sale_id', saleId);
+
+    fetch('modules/delete_sale.php', {
+      method: 'POST',
+      body: formData
     })
-    .catch(err => {
-      setSaleButtonsEnabled(true); 
-      console.error("Record sale error:", err);
-      alert("Error recording sale. Check console for details.");
+      .then(r => r.text())
+      .then(text => {
+        let data;
+        try { data = JSON.parse(text); } catch (e) { throw new Error('Invalid JSON: ' + text); }
+        if (data.success) {
+          alert('Sale deleted and inventory restored');
+          // Only reload the sales table instead of the entire page
+          loadSales();
+        } else {
+          alert('Delete failed: ' + (data.message || 'Unknown'));
+        }
+      })
+      .catch(err => {
+        console.error('deleteSale error', err);
+        alert('Delete failed: ' + err.message);
+      });
+  }
+
+  // ---------- SAVE SALE (AJAX to record_sale.php) ----------
+  function saveSale() {
+    const saleDate = document.getElementById('saleDate').value;
+    const branchSelect = document.getElementById('saleBranch');
+    const customerType = document.getElementById('customerType').value;
+    const branchId = (USER_ROLE === 'shop' && USER_BRANCH_ID > 0)
+      ? USER_BRANCH_ID
+      : branchSelect.value;
+
+    if (!saleDate || !branchId || !customerType) {
+      alert("Please select date, branch, and customer type.");
+      return;
+    }
+
+    const rows = document.querySelectorAll('#saleItemsBody tr');
+    if (!rows.length) {
+      alert("Please add at least one item.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('sale_date', saleDate);
+    formData.append('branch_id', branchId);
+    formData.append('customer_type', customerType);
+
+    rows.forEach(row => {
+      const productId = row.querySelector('.product-select').value;
+      const qty       = row.querySelector('.qty-input').value;
+      const price     = row.querySelector('input[name="unit_price[]"]').value;
+
+      if (productId && qty > 0) {
+        formData.append('product_id[]', productId);
+        formData.append('quantity[]', qty);
+        formData.append('unit_price[]', price);
+      }
     });
-}
+
+    if (!formData.getAll('product_id[]').length) {
+      alert("Please select products and quantities.");
+      return;
+    }
+
+    setSaleButtonsEnabled(false);
+
+    fetch('modules/record_sale.php', {
+      method: 'POST',
+      body: formData
+    })
+      .then(r => r.text())
+      .then(text => {
+        console.log("Record sale response:", text);
+        let data;
+        try { data = JSON.parse(text); }
+        catch (e) { 
+          setSaleButtonsEnabled(true); 
+          throw new Error("Not valid JSON: " + text); 
+        }
+        setSaleButtonsEnabled(true); 
+
+        if (data.success) {
+          alert("Sale recorded successfully!");
+          closeSaleModal();
+          // Only reload the sales table instead of the entire page
+          loadSales();
+        } else {
+          alert("Error: " + (data.message || "Failed to record sale."));
+        }
+      })
+      .catch(err => {
+        setSaleButtonsEnabled(true); 
+        console.error("Record sale error:", err);
+        alert("Error recording sale. Check console for details.");
+      });
+  }
 
   // ---------- LOADING INDICATOR FUNCTIONS ----------
   function showLoadingIndicator() {
@@ -873,4 +976,296 @@ function saveSale() {
       document.body.style.cursor = "wait";
     }
   }
+
+  // ---------- IMPORT SALES JS ----------
+
+  // Allowed customer types
+  const ALLOWED_CUSTOMER_TYPES = ['Regular', 'Senior', 'PWD'];
+
+  // Helper: find product in PRODUCTS by name (case-insensitive, trims)
+  function findProductByName(name) {
+    if (!name) return null;
+    const n = name.trim().toLowerCase();
+    return PRODUCTS.find(p => p.name.trim().toLowerCase() === n) || null;
+  }
+
+  // File input handling
+  const importBtn = document.getElementById('openImportBtn');
+  const importFileInput = document.getElementById('importFileInput');
+
+  importBtn.addEventListener('click', () => importFileInput.click());
+
+  importFileInput.addEventListener('change', (ev) => {
+    const file = ev.target.files[0];
+    if (!file) return;
+
+    // Validate extension
+    const allowedExt = ['xlsx','xls'];
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (!allowedExt.includes(ext)) {
+      alert('Please select an Excel file (.xls or .xlsx).');
+      importFileInput.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, { type: 'array' });
+
+      // Use first sheet
+      const firstSheetName = wb.SheetNames[0];
+      const ws = wb.Sheets[firstSheetName];
+
+      // Convert to JSON with header auto-detection (assume headers: Product Name, Quantity, Customer Type)
+      const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+      if (!rows.length) {
+        alert('Excel file is empty.');
+        return;
+      }
+
+      // Parse rows and validate
+      const validRows = [];
+      const invalidProducts = [];
+      const invalidCustomerTypes = [];
+
+      rows.forEach((r, idx) => {
+        // Attempt common header keys (case-insensitive)
+        // Accept keys like: Product Name, Product, product_name, Name
+        const keys = Object.keys(r);
+        let pname = '';
+        let qty = '';
+        let ctype = '';
+
+        // find product name key
+        for (const k of keys) {
+          if (/product/i.test(k) || /name/i.test(k) && /product/i.test(k) ) {
+            // prefer exact product name columns — but fallback to any containing "product" or "name"
+            pname = r[k];
+          }
+        }
+        // if still empty, try first column
+        if (!pname) pname = r[keys[0]];
+
+        // Quantity
+        const qtyKey = keys.find(k => /qty|quantity/i.test(k));
+        qty = qtyKey ? r[qtyKey] : (keys[1] ? r[keys[1]] : '');
+
+        // Customer Type
+        const ctKey = keys.find(k => /customer/i.test(k) || /type/i.test(k));
+        ctype = ctKey ? r[ctKey] : (keys[2] ? r[keys[2]] : '');
+
+        // Normalize
+        pname = String(pname || '').trim();
+        ctype = String(ctype || '').trim();
+        qty = Number(String(qty || '').toString().trim()) || 0;
+
+        // find product in DB copy (PRODUCTS)
+        const prod = findProductByName(pname);
+
+        if (!prod) {
+          invalidProducts.push(pname || `Row ${idx+2}`);
+          return; // skip listing non-existent product
+        }
+
+        if (!ALLOWED_CUSTOMER_TYPES.includes(ctype)) {
+          invalidCustomerTypes.push(ctype || `Row ${idx+2}`);
+          return; // skip invalid customer types
+        }
+
+        if (qty <= 0) {
+          // skip zero qty rows silently (or we can warn — here we skip)
+          return;
+        }
+
+        // Compute unit price from PRODUCTS price
+        const unitPrice = prod.price || 0;
+        const lineTotal = (unitPrice * qty);
+
+        validRows.push({
+          product_id: prod.id,
+          product_name: prod.name,
+          unit_price: unitPrice,
+          quantity: qty,
+          customer_type: ctype,
+          line_total: lineTotal
+        });
+      });
+
+      // Show alerts for invalid items (if any)
+      let alertMsgs = [];
+      if (invalidProducts.length) alertMsgs.push('The following products are not in the database and were skipped:\n' + invalidProducts.join(', '));
+      if (invalidCustomerTypes.length) alertMsgs.push('The following customer types are invalid and were skipped:\n' + invalidCustomerTypes.join(', '));
+      if (alertMsgs.length) alert(alertMsgs.join('\n\n'));
+
+      if (!validRows.length) {
+        alert('No valid rows to import after validation.');
+        return;
+      }
+
+      // Populate import modal table
+      populateImportTable(validRows);
+
+      // open modal and prefill date & branch (date default to today)
+      document.getElementById('importDate').value = new Date().toISOString().split('T')[0];
+      if (USER_ROLE === 'shop' && USER_BRANCH_ID > 0) {
+        document.getElementById('importBranch').value = USER_BRANCH_ID;
+      }
+
+      openImportModal();
+    };
+
+    reader.readAsArrayBuffer(file);
+  });
+
+  // Populate table function
+  let IMPORT_ROWS = []; // hold parsed rows
+  function populateImportTable(rows) {
+    IMPORT_ROWS = rows; // store for submission
+    const tbody = document.getElementById('importItemsBody');
+    tbody.innerHTML = '';
+    let grand = 0;
+
+    rows.forEach(r => {
+      grand += r.line_total;
+      tbody.insertAdjacentHTML('beforeend', `
+        <tr data-product-id="${r.product_id}">
+          <td>${escapeHtml(r.product_name)}</td>
+          <td class="right">₱${Number(r.unit_price).toFixed(2)}</td>
+          <td class="right">${r.quantity}</td>
+          <td class="right">${escapeHtml(r.customer_type)}</td>
+          <td class="right">₱${Number(r.line_total).toFixed(2)}</td>
+        </tr>
+      `);
+    });
+
+    document.getElementById('importGrandTotal').textContent = grand.toFixed(2);
+  }
+
+  // open/close import modal
+  function openImportModal() {
+    document.getElementById('importModal').classList.add('show');
+    document.querySelector('.topbar')?.classList.add('disabled');
+  }
+
+  function closeImportModal() {
+    document.getElementById('importModal').classList.remove('show');
+    document.querySelector('.topbar')?.classList.remove('disabled');
+    // clear file input
+    importFileInput.value = '';
+    IMPORT_ROWS = [];
+    document.getElementById('importItemsBody').innerHTML = '';
+    document.getElementById('importGrandTotal').textContent = '0.00';
+  }
+
+  // Escape helper
+  function escapeHtml(text) {
+    return String(text).replace(/[&<>"']/g, function(m) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[m]; });
+  }
+
+  // Confirm import: validate date/branch, check stock, submit
+  function confirmImport() {
+    const date = document.getElementById('importDate').value;
+    let branch = document.getElementById('importBranch').value;
+    if (USER_ROLE === 'shop' && USER_BRANCH_ID > 0) branch = USER_BRANCH_ID;
+
+    if (!date || !branch) {
+      alert('Please choose Date and Branch before confirming import.');
+      return;
+    }
+
+    if (!IMPORT_ROWS.length) {
+      alert('No rows to import.');
+      return;
+    }
+
+    // Prepare product ids and quantities to check stock in backend
+    const payload = {
+      branch_id: branch,
+      products: IMPORT_ROWS.map(r => ({ product_id: r.product_id, qty: r.quantity }))
+    };
+
+    // Check stocks
+    fetch('modules/check_stock.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (!data.success) throw new Error(data.message || 'Stock check failed.');
+
+      // data.stocks => { product_id: availableQty, ... }
+      const shortages = [];
+      IMPORT_ROWS.forEach(r => {
+        const avail = Number(data.stocks[r.product_id] || 0);
+        if (r.quantity > avail) {
+          shortages.push(`${r.product_name} (need ${r.quantity}, available ${avail})`);
+        }
+      });
+
+      if (shortages.length) {
+        alert('Insufficient stock for these products in selected branch:\n' + shortages.join('\n'));
+        return; // keep modal open for review
+      }
+
+      // All good -> submit import
+      submitImport(date, branch, IMPORT_ROWS);
+    })
+    .catch(err => {
+      console.error('Stock check error', err);
+      alert('Error checking stock: ' + err.message);
+    });
+  }
+
+  // Submit import to server
+  function submitImport(date, branchId, rows) {
+    setImportButtonsEnabled(false);
+
+    const fd = new FormData();
+    fd.append('sale_date', date);
+    fd.append('branch_id', branchId);
+
+    rows.forEach(r => {
+      fd.append('product_id[]', r.product_id);
+      fd.append('quantity[]', r.quantity);
+      fd.append('unit_price[]', r.unit_price);
+      fd.append('customer_type[]', r.customer_type);
+    });
+
+    fetch('modules/import_sales.php', {
+      method: 'POST',
+      body: fd
+    })
+    .then(r => r.text())
+    .then(txt => {
+      let data;
+      try { data = JSON.parse(txt); } catch(e) { throw new Error('Invalid JSON: ' + txt); }
+
+      setImportButtonsEnabled(true);
+
+      if (data.success) {
+        alert('Import successful!');
+        closeImportModal();
+        loadSales();
+      } else {
+        alert('Import failed: ' + (data.message || 'Unknown error'));
+      }
+    })
+    .catch(err => {
+      setImportButtonsEnabled(true);
+      console.error('Import submit error', err);
+      alert('Error submitting import: ' + err.message);
+    });
+  }
+
+  function setImportButtonsEnabled(enabled) {
+    const saveBtn = document.getElementById('importConfirmBtn');
+    const cancelBtn = document.getElementById('importCancelBtn');
+    if (saveBtn) saveBtn.disabled = !enabled;
+    if (cancelBtn) cancelBtn.disabled = !enabled;
+    document.body.style.cursor = enabled ? 'default' : 'wait';
+  }
+
 </script>

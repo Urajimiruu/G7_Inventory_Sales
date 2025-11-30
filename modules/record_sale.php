@@ -52,6 +52,17 @@ try {
     for ($i = 0; $i < count($productIds); $i++) {
         $pid = (int)$productIds[$i];
         $qty = (int)$quantities[$i];
+        // Fetch product name (no logic change)
+        $pname = "";
+        $pnStmt = $conn->prepare("SELECT product_name FROM products WHERE product_id = ?");
+        $pnStmt->bind_param("i", $pid);
+        $pnStmt->execute();
+        $pnStmt->bind_result($pname);
+        $pnStmt->fetch();
+        $pnStmt->close();
+
+        if (!$pname) $pname = "Product #$pid";
+
         $originalUnitPrice = (float)$unitPrices[$i];
 
         if ($pid <= 0 || $qty <= 0) continue;
@@ -77,7 +88,7 @@ try {
         $invStmt->bind_param("iiii", $qty, $branchId, $pid, $qty);
         $invStmt->execute();
         if ($invStmt->affected_rows === 0) {
-            throw new Exception("Not enough stock for product ID $pid.");
+            throw new Exception("Not enough stock for product: $pname.");
         }
 
         // Insert sale with final unit price (discounted if applicable)
