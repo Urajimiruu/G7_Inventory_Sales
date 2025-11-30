@@ -23,7 +23,7 @@ $offset = ($page - 1) * $limit;
    1. BUILD FILTER CONDITIONS FOR BOTH QUERIES
 ------------------------------------------ */
 
-$where = " WHERE s.status = 'active' ";
+$where = " WHERE s.status IN ('active','returned') ";
 $params = [];
 $types  = "";
 
@@ -93,16 +93,34 @@ SELECT
     b.branch_name,
     p.product_name,
 
-    SUM(s.quantity) AS total_sold,
+    SUM(
+        CASE 
+            WHEN s.status = 'returned' THEN -s.quantity
+            ELSE s.quantity
+        END
+    ) AS total_sold,
 
-    -- USE UNIT PRICE FROM SALES
-    SUM(s.quantity * s.unit_price) AS total_sales,
+    SUM(
+        CASE 
+            WHEN s.status = 'returned' THEN -(s.quantity * s.unit_price)
+            ELSE (s.quantity * s.unit_price)
+        END
+    ) AS total_sales,
 
-    -- USE COST PRICE FROM PRODUCTS
-    SUM(s.quantity * p.cost_price) AS total_cost,
+    SUM(
+        CASE 
+            WHEN s.status = 'returned' THEN -(s.quantity * p.cost_price)
+            ELSE (s.quantity * p.cost_price)
+        END
+    ) AS total_cost,
 
-    -- REAL PROFIT OR LOSS
-    (SUM(s.quantity * s.unit_price) - SUM(s.quantity * p.cost_price)) AS profit
+    SUM(
+        CASE 
+            WHEN s.status = 'returned' 
+            THEN -((s.unit_price - p.cost_price) * s.quantity)
+            ELSE  ((s.unit_price - p.cost_price) * s.quantity)
+        END
+    ) AS profit
 
 FROM Sales s
 JOIN Products p ON s.product_id = p.product_id
@@ -178,9 +196,6 @@ if ($result && $result->num_rows > 0) {
     echo "<tr><td colspan='7' style='text-align:center;'>No profit/loss records found</td></tr>";
 }
 
-$stmt->close();
-
-
 /* ------------------------------------------
    5. OUTPUT PAGINATION
 ------------------------------------------ */
@@ -223,21 +238,40 @@ if ($totalPages > 1) {
 
 echo "</td></tr>";
 
+$stmt->close();
+
 /* ------------------------------------------
    GRAND TOTALS (based only on filters, NOT pagination)
 ------------------------------------------ */
 
 $totalsSql = "
     SELECT
-        SUM(s.quantity) AS total_qty,
-        SUM(s.quantity * s.unit_price) AS total_sales,
-        SUM(s.quantity * p.cost_price) AS total_cost,
-        SUM((s.unit_price - p.cost_price) * s.quantity) AS total_profit
+        SUM(
+            CASE WHEN s.status='returned' THEN -s.quantity ELSE s.quantity END
+        ) AS total_qty,
+
+        SUM(
+            CASE WHEN s.status='returned' THEN -(s.quantity * s.unit_price)
+                ELSE  (s.quantity * s.unit_price)
+            END
+        ) AS total_sales,
+
+        SUM(
+            CASE WHEN s.status='returned' THEN -(s.quantity * p.cost_price)
+                ELSE  (s.quantity * p.cost_price)
+            END
+        ) AS total_cost,
+
+        SUM(
+            CASE WHEN s.status='returned'
+                THEN -((s.unit_price - p.cost_price) * s.quantity)
+                ELSE  ((s.unit_price - p.cost_price) * s.quantity)
+            END
+        ) AS total_profit
     FROM Sales s
     JOIN Products p ON s.product_id = p.product_id
     JOIN Branches b ON s.branch_id = b.branch_id
     $where
-      AND s.status = 'active'
 ";
 
 $stmtTotals = $conn->prepare($totalsSql);

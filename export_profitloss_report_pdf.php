@@ -19,64 +19,73 @@ $product = $_GET['product'] ?? '';
 $search  = trim($_GET['search'] ?? '');
 $sort    = $_GET['sort'] ?? '';
 
-// ---- SQL base ----
-$sql = "
-SELECT 
-    b.branch_name,
-    p.product_name,
-
-    SUM(s.quantity) AS total_sold,
-
-    -- Correct sales: use the unit_price saved per sale
-    SUM(s.quantity * s.unit_price) AS total_sales,
-
-    -- Correct cost from products table
-    SUM(s.quantity * p.cost_price) AS total_cost,
-
-    -- Correct profit or loss
-    (SUM(s.quantity * s.unit_price) - SUM(s.quantity * p.cost_price)) AS profit
-
-FROM Sales s
-JOIN Products p ON s.product_id = p.product_id
-JOIN Branches b ON s.branch_id = b.branch_id
-
--- Correct filter for returned items
-WHERE s.status = 'active'
-";
-
+$where = " WHERE s.status IN ('active','returned') ";
 $params = [];
 $types  = "";
 
 // role restriction
 if (strtolower($role) === 'shop' && $branchId > 0) {
-    $sql .= " AND s.branch_id = ? ";
+    $where .= " AND s.branch_id = ? ";
     $types .= "i";
     $params[] = $branchId;
 }
 
 // search filter
 if ($search !== '') {
-    $sql .= " AND (p.product_name LIKE ? OR b.branch_name LIKE ?) ";
+    $where .= " AND (p.product_name LIKE ? OR b.branch_name LIKE ?) ";
     $types .= "ss";
     $params[] = "%$search%";
     $params[] = "%$search%";
 }
 
-// branch filter
+// filters
 if ($branch !== '') {
-    $sql .= " AND s.branch_id = ? ";
+    $where .= " AND s.branch_id = ? ";
     $types .= "i";
     $params[] = (int)$branch;
 }
 
-// product filter
 if ($product !== '') {
-    $sql .= " AND s.product_id = ? ";
+    $where .= " AND s.product_id = ? ";
     $types .= "i";
     $params[] = (int)$product;
 }
 
-$sql .= " GROUP BY b.branch_name, p.product_name ";
+// FINAL SQL (matches UI)
+$sql = "
+SELECT
+    b.branch_name,
+    p.product_name,
+
+    SUM(
+        CASE WHEN s.status='returned' THEN -s.quantity ELSE s.quantity END
+    ) AS total_sold,
+
+    SUM(
+        CASE WHEN s.status='returned' THEN -(s.quantity * s.unit_price)
+             ELSE  (s.quantity * s.unit_price)
+        END
+    ) AS total_sales,
+
+    SUM(
+        CASE WHEN s.status='returned' THEN -(s.quantity * p.cost_price)
+             ELSE  (s.quantity * p.cost_price)
+        END
+    ) AS total_cost,
+
+    SUM(
+        CASE WHEN s.status='returned'
+             THEN -((s.unit_price - p.cost_price) * s.quantity)
+             ELSE  ((s.unit_price - p.cost_price) * s.quantity)
+        END
+    ) AS profit
+
+FROM Sales s
+JOIN Products p ON s.product_id = p.product_id
+JOIN Branches b ON s.branch_id = b.branch_id
+$where
+GROUP BY b.branch_name, p.product_name
+";
 
 // sorting
 if ($sort === 'asc') {

@@ -108,7 +108,9 @@ function loadProfitLoss(page = 1) {
     .then(res => res.text())
     .then(response => {
 
-        const [tableRows, paginationHtml] = response.split("<!--PAGINATION-->");
+        const parts = response.split("<!--PAGINATION-->");
+        const tableRows = parts[0];
+        const paginationHtml = parts[1] || "";
 
         document.getElementById('profitLossBody').innerHTML = tableRows;
         document.getElementById('profitLossPagination').innerHTML = paginationHtml;
