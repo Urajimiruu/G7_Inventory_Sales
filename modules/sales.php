@@ -536,6 +536,7 @@
   // ---------- RETURN SALE FUNCTION ----------
   function returnSale(saleId) {
     if (confirm('Are you sure you want to return this sale? This will mark the sale as returned.')) {
+      document.body.style.cursor = "wait";
       const formData = new FormData();
       formData.append('sale_id', saleId);
       
@@ -561,7 +562,10 @@
         .catch(err => {
           console.error("Return sale error:", err);
           alert("Error returning sale. Check console for details.");
-        });
+        })
+         .finally(() => {
+            document.body.style.cursor = "default";
+        });;
     }
   }
 
