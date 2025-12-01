@@ -67,6 +67,8 @@ $branchId = (int)($_SESSION['branch_id'] ?? 0);
           <th>Product</th>
           <th class="right">Total Quantity Sold</th>
           <th class="right">Total Sales</th>
+          <th class="right">Returned Sales</th>
+          <th class="right">Net Sales</th>
           <th class="right">Total Cost</th>
           <th class="right">Profit / Loss</th>
           <th>Status</th>
@@ -115,34 +117,44 @@ function loadProfitLoss(page = 1) {
         document.getElementById('profitLossBody').innerHTML = tableRows;
         document.getElementById('profitLossPagination').innerHTML = paginationHtml;
 
-        // Read totals
+        // Read totals (hidden data inside tableRows)
         const temp = document.createElement("div");
         temp.innerHTML = tableRows;
         const totals = temp.querySelector("#profitLossTotalsData");
 
         if (totals) {
-            const qty    = Number(totals.dataset.totalQty);
-            const sales  = Number(totals.dataset.totalSales);
-            const cost   = Number(totals.dataset.totalCost);
-            const profit = Number(totals.dataset.totalProfit);
+            const qtySold       = Number(totals.dataset.totalQtySold || 0);
+            const totalSales    = Number(totals.dataset.totalSalesActive || 0);
+            const returnedSales = Number(totals.dataset.totalReturned || 0);
+            const netSales      = Number(totals.dataset.netSales || 0);
+            const totalCost     = Number(totals.dataset.totalCost || 0);
+            const totalProfit   = Number(totals.dataset.totalProfit || 0);
 
             document.getElementById("profitLossTotals").innerHTML = `
                 <div class="pl-total-card-wrapper">
-                    <div class="pl-total-card">
+               <!-- <div class="pl-total-card">
                         <b>Total Qty Sold</b><br>
-                        <span class="inv-total-number">${qty.toLocaleString()}</span>
-                    </div>
+                        <span class="inv-total-number">${qtySold.toLocaleString()}</span>
+                    </div> -->
                     <div class="pl-total-card">
                         <b>Total Sales</b><br>
-                        <span class="inv-total-number">₱${sales.toLocaleString()}</span>
+                        <span class="inv-total-number">₱${totalSales.toLocaleString()}</span>
+                    </div>
+                    <div class="pl-total-card">
+                        <b>Total Returned Sales</b><br>
+                        <span class="inv-total-number">₱${returnedSales.toLocaleString()}</span>
+                    </div>
+                    <div class="pl-total-card">
+                        <b>Net Sales</b><br>
+                        <span class="inv-total-number">₱${netSales.toLocaleString()}</span>
                     </div>
                     <div class="pl-total-card">
                         <b>Total Cost</b><br>
-                        <span class="inv-total-number">₱${cost.toLocaleString()}</span>
+                        <span class="inv-total-number">₱${totalCost.toLocaleString()}</span>
                     </div>
                     <div class="pl-total-card">
                         <b>Total Profit</b><br>
-                        <span class="inv-total-number">₱${profit.toLocaleString()}</span>
+                        <span class="inv-total-number">₱${totalProfit.toLocaleString()}</span>
                     </div>
                 </div>
             `;

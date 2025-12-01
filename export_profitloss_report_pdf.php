@@ -19,7 +19,8 @@ $product = $_GET['product'] ?? '';
 $search  = trim($_GET['search'] ?? '');
 $sort    = $_GET['sort'] ?? '';
 
-$where = " WHERE s.status IN ('active','returned') ";
+// Build same WHERE as fetch to ensure consistency
+$where = " WHERE 1=1 ";
 $params = [];
 $types  = "";
 
@@ -30,7 +31,7 @@ if (strtolower($role) === 'shop' && $branchId > 0) {
     $params[] = $branchId;
 }
 
-// search filter
+// search
 if ($search !== '') {
     $where .= " AND (p.product_name LIKE ? OR b.branch_name LIKE ?) ";
     $types .= "ss";
@@ -38,48 +39,37 @@ if ($search !== '') {
     $params[] = "%$search%";
 }
 
-// filters
+// branch filter
 if ($branch !== '') {
     $where .= " AND s.branch_id = ? ";
     $types .= "i";
     $params[] = (int)$branch;
 }
 
+// product filter
 if ($product !== '') {
     $where .= " AND s.product_id = ? ";
     $types .= "i";
     $params[] = (int)$product;
 }
 
-// FINAL SQL (matches UI)
 $sql = "
 SELECT
     b.branch_name,
     p.product_name,
-
-    SUM(
-        CASE WHEN s.status='returned' THEN -s.quantity ELSE s.quantity END
-    ) AS total_sold,
-
-    SUM(
-        CASE WHEN s.status='returned' THEN -(s.quantity * s.unit_price)
-             ELSE  (s.quantity * s.unit_price)
-        END
-    ) AS total_sales,
-
-    SUM(
-        CASE WHEN s.status='returned' THEN -(s.quantity * p.cost_price)
-             ELSE  (s.quantity * p.cost_price)
-        END
-    ) AS total_cost,
-
-    SUM(
-        CASE WHEN s.status='returned'
-             THEN -((s.unit_price - p.cost_price) * s.quantity)
-             ELSE  ((s.unit_price - p.cost_price) * s.quantity)
-        END
+    SUM(CASE WHEN s.status = 'active' THEN s.quantity ELSE 0 END) AS total_qty_sold,
+    SUM(CASE WHEN s.status = 'active' THEN (s.quantity * s.unit_price) ELSE 0 END) AS total_sales_active,
+    SUM(CASE WHEN s.status = 'returned' THEN (s.quantity * p.selling_price) ELSE 0 END) AS total_returned_sales,
+    (SUM(CASE WHEN s.status = 'active' THEN (s.quantity * s.unit_price) ELSE 0 END)
+     - SUM(CASE WHEN s.status = 'returned' THEN (s.quantity * p.selling_price) ELSE 0 END)
+    ) AS net_sales,
+    SUM(CASE WHEN s.status = 'active' THEN (s.quantity * p.cost_price) ELSE 0 END) AS total_cost_active,
+    (
+      (SUM(CASE WHEN s.status = 'active' THEN (s.quantity * s.unit_price) ELSE 0 END)
+       - SUM(CASE WHEN s.status = 'returned' THEN (s.quantity * p.selling_price) ELSE 0 END)
+      )
+      - SUM(CASE WHEN s.status = 'active' THEN (s.quantity * p.cost_price) ELSE 0 END)
     ) AS profit
-
 FROM Sales s
 JOIN Products p ON s.product_id = p.product_id
 JOIN Branches b ON s.branch_id = b.branch_id
@@ -87,7 +77,6 @@ $where
 GROUP BY b.branch_name, p.product_name
 ";
 
-// sorting
 if ($sort === 'asc') {
     $sql .= " ORDER BY profit ASC";
 } elseif ($sort === 'desc') {
@@ -107,7 +96,7 @@ while ($row = $result->fetch_assoc()) {
 }
 $stmt->close();
 
-// ---- Label helpers ----
+// label helpers (same as before)
 function getBranchLabel($conn, $id) {
     if (!$id) return "All Branches";
     $name = null;
@@ -135,25 +124,28 @@ function getProductLabel($conn, $id) {
 $branchLabel  = getBranchLabel($conn, (int)$branch);
 $productLabel = getProductLabel($conn, (int)$product);
 
-// ---- Totals ----
-$totalQty    = 0;
-$totalSales  = 0;
-$totalCost   = 0;
-$totalProfit = 0;
+// totals for PDF
+$totalQty       = 0;
+$totalSalesAct  = 0;
+$totalReturned  = 0;
+$totalNetSales  = 0;
+$totalCostAct   = 0;
+$totalProfit    = 0;
 
 foreach ($rows as $r) {
-    $totalQty    += (int)$r['total_sold'];
-    $totalSales  += (float)$r['total_sales'];
-    $totalCost   += (float)$r['total_cost'];
-    $totalProfit += (float)$r['profit'];
+    $totalQty      += (int)$r['total_qty_sold'];
+    $totalSalesAct += (float)$r['total_sales_active'];
+    $totalReturned += (float)$r['total_returned_sales'];
+    $totalNetSales += (float)$r['net_sales'];
+    $totalCostAct  += (float)$r['total_cost_active'];
+    $totalProfit   += (float)$r['profit'];
 }
 
-// peso formatting
 function peso($n) {
     return "₱" . number_format((float)$n, 2);
 }
 
-// ---- Build PDF HTML ----
+// Build PDF HTML
 $html = "
 <style>
 body { font-family: DejaVu Sans, sans-serif; font-size: 11px; }
@@ -182,6 +174,8 @@ th { background: #f2f2f2; font-weight: bold; }
     <th>Product</th>
     <th class='right'>Total Quantity Sold</th>
     <th class='right'>Total Sales</th>
+    <th class='right'>Returned Sales</th>
+    <th class='right'>Net Sales</th>
     <th class='right'>Total Cost</th>
     <th class='right'>Profit / Loss</th>
     <th>Status</th>
@@ -207,30 +201,34 @@ if (count($rows) > 0) {
         <tr>
             <td>" . htmlspecialchars($r['branch_name']) . "</td>
             <td>" . htmlspecialchars($r['product_name']) . "</td>
-            <td class='right'>" . (int)$r['total_sold'] . "</td>
-            <td class='right'>" . peso($r['total_sales']) . "</td>
-            <td class='right'>" . peso($r['total_cost']) . "</td>
+            <td class='right'>" . (int)$r['total_qty_sold'] . "</td>
+            <td class='right'>" . peso($r['total_sales_active']) . "</td>
+            <td class='right'>" . peso($r['total_returned_sales']) . "</td>
+            <td class='right'>" . peso($r['net_sales']) . "</td>
+            <td class='right'>" . peso($r['total_cost_active']) . "</td>
             <td class='right {$profitClass}'>" . peso($profit) . "</td>
             <td>{$statusText}</td>
         </tr>";
     }
 } else {
-    $html .= "<tr><td colspan='7' style='text-align:center;'>No records found</td></tr>";
+    $html .= "<tr><td colspan='9' style='text-align:center;'>No records found</td></tr>";
 }
 
 $html .= "
 <tr class='total-row'>
     <td colspan='2'>TOTALS</td>
     <td class='right'>{$totalQty}</td>
-    <td class='right'>" . peso($totalSales) . "</td>
-    <td class='right'>" . peso($totalCost) . "</td>
+    <td class='right'>" . peso($totalSalesAct) . "</td>
+    <td class='right'>" . peso($totalReturned) . "</td>
+    <td class='right'>" . peso($totalNetSales) . "</td>
+    <td class='right'>" . peso($totalCostAct) . "</td>
     <td class='right'>" . peso($totalProfit) . "</td>
     <td></td>
 </tr>
 </table>
 ";
 
-// ---- Render PDF ----
+// Render PDF
 $options = new Options();
 $options->set('isRemoteEnabled', true);
 

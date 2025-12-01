@@ -3,7 +3,7 @@ require_once "db_connection.php";
 session_start();
 
 if (!isset($_SESSION['user_id'])) {
-    echo "<tr><td colspan='7' style='text-align:center;'>Unauthorized</td></tr><!--PAGINATION-->";
+    echo "<tr><td colspan='9' style='text-align:center;'>Unauthorized</td></tr><!--PAGINATION-->";
     exit;
 }
 
@@ -23,11 +23,11 @@ $offset = ($page - 1) * $limit;
    1. BUILD FILTER CONDITIONS FOR BOTH QUERIES
 ------------------------------------------ */
 
-$where = " WHERE s.status IN ('active','returned') ";
+$where = " WHERE 1=1 ";
 $params = [];
 $types  = "";
 
-// shop restriction
+// shop restriction (if shop-role, restrict)
 if (strtolower($role) === 'shop' && $branchId > 0) {
     $where .= " AND s.branch_id = ? ";
     $types .= "i";
@@ -56,9 +56,9 @@ if ($filterProduct !== '') {
     $params[] = (int)$filterProduct;
 }
 
-
 /* ------------------------------------------
    2. COUNT QUERY 
+   Count number of grouped rows (branch+product) for pagination
 ------------------------------------------ */
 
 $countSql = "
@@ -83,43 +83,44 @@ $stmtCount->close();
 
 $totalPages = max(1, ceil($totalRows / $limit));
 
-
 /* ------------------------------------------
    3. MAIN QUERY WITH LIMIT
+   Build aggregates per branch+product using the rules:
+   - Active totals use s.unit_price and s.quantity
+   - Returned totals use p.selling_price and s.quantity (no discounts)
+   - Net sales = active_sales - returned_sales
+   - Total cost uses active quantity * p.cost_price
+   - Profit = net_sales - total_cost
 ------------------------------------------ */
 
 $sql = "
-SELECT 
+SELECT
     b.branch_name,
     p.product_name,
 
-    SUM(
-        CASE 
-            WHEN s.status = 'returned' THEN -s.quantity
-            ELSE s.quantity
-        END
-    ) AS total_sold,
+    -- active qty only
+    SUM(CASE WHEN s.status = 'active' THEN s.quantity ELSE 0 END) AS total_qty_sold,
 
-    SUM(
-        CASE 
-            WHEN s.status = 'returned' THEN -(s.quantity * s.unit_price)
-            ELSE (s.quantity * s.unit_price)
-        END
-    ) AS total_sales,
+    -- total sales from active (unit_price recorded in sale, includes discount if any)
+    SUM(CASE WHEN s.status = 'active' THEN (s.quantity * s.unit_price) ELSE 0 END) AS total_sales_active,
 
-    SUM(
-        CASE 
-            WHEN s.status = 'returned' THEN -(s.quantity * p.cost_price)
-            ELSE (s.quantity * p.cost_price)
-        END
-    ) AS total_cost,
+    -- returned sales use product selling_price (ignore discounts)
+    SUM(CASE WHEN s.status = 'returned' THEN (s.quantity * p.selling_price) ELSE 0 END) AS total_returned_sales,
 
-    SUM(
-        CASE 
-            WHEN s.status = 'returned' 
-            THEN -((s.unit_price - p.cost_price) * s.quantity)
-            ELSE  ((s.unit_price - p.cost_price) * s.quantity)
-        END
+    -- net sales = active - returned
+    (SUM(CASE WHEN s.status = 'active' THEN (s.quantity * s.unit_price) ELSE 0 END)
+     - SUM(CASE WHEN s.status = 'returned' THEN (s.quantity * p.selling_price) ELSE 0 END)
+    ) AS net_sales,
+
+    -- cost only for active qty
+    SUM(CASE WHEN s.status = 'active' THEN (s.quantity * p.cost_price) ELSE 0 END) AS total_cost_active,
+
+    -- profit = net_sales - total_cost_active (defined explicitly for ORDER BY)
+    (
+      (SUM(CASE WHEN s.status = 'active' THEN (s.quantity * s.unit_price) ELSE 0 END)
+       - SUM(CASE WHEN s.status = 'returned' THEN (s.quantity * p.selling_price) ELSE 0 END)
+      )
+      - SUM(CASE WHEN s.status = 'active' THEN (s.quantity * p.cost_price) ELSE 0 END)
     ) AS profit
 
 FROM Sales s
@@ -129,7 +130,6 @@ $where
 GROUP BY b.branch_name, p.product_name
 ";
 
-// sorting
 if ($sortProfit === 'asc') {
     $sql .= " ORDER BY profit ASC ";
 } elseif ($sortProfit === 'desc') {
@@ -140,7 +140,7 @@ if ($sortProfit === 'asc') {
 
 $sql .= " LIMIT ?, ? ";
 
-// add limit parameters
+// bind limit params
 $types2 = $types . "ii";
 $params2 = array_merge($params, [$offset, $limit]);
 
@@ -149,9 +149,8 @@ $stmt->bind_param($types2, ...$params2);
 $stmt->execute();
 $result = $stmt->get_result();
 
-
 /* ------------------------------------------
-   4. OUTPUT TABLE ROWS
+   4. Output table rows (first part)
 ------------------------------------------ */
 
 if ($result && $result->num_rows > 0) {
@@ -159,9 +158,11 @@ if ($result && $result->num_rows > 0) {
 
         $branch = htmlspecialchars($row['branch_name']);
         $product = htmlspecialchars($row['product_name']);
-        $qty = (int)$row['total_sold'];
-        $sales = number_format($row['total_sales'], 2);
-        $cost = number_format($row['total_cost'], 2);
+        $qty = (int)$row['total_qty_sold'];
+        $salesActive = number_format((float)$row['total_sales_active'], 2);
+        $returnedSales = number_format((float)$row['total_returned_sales'], 2);
+        $netSales = number_format((float)$row['net_sales'], 2);
+        $cost = number_format((float)$row['total_cost_active'], 2);
         $profit = (float)$row['profit'];
         $profitFmt = number_format($profit, 2);
 
@@ -181,7 +182,9 @@ if ($result && $result->num_rows > 0) {
             <td>{$branch}</td>
             <td>{$product}</td>
             <td class='right'>{$qty}</td>
-            <td class='right'>₱{$sales}</td>
+            <td class='right'>₱{$salesActive}</td>
+            <td class='right'>₱{$returnedSales}</td>
+            <td class='right'>₱{$netSales}</td>
             <td class='right'>₱{$cost}</td>
             <td class='right'>₱{$profitFmt}</td>
             <td>
@@ -193,18 +196,19 @@ if ($result && $result->num_rows > 0) {
         </tr>";
     }
 } else {
-    echo "<tr><td colspan='7' style='text-align:center;'>No profit/loss records found</td></tr>";
+    echo "<tr><td colspan='9' style='text-align:center;'>No profit/loss records found</td></tr>";
 }
 
+$stmt->close();
+
 /* ------------------------------------------
-   5. OUTPUT PAGINATION
+   5. Pagination (second part)
 ------------------------------------------ */
-echo "<tr><td colspan='8' style='text-align:center;'>";
+echo "<tr><td colspan='9' style='text-align:center;'>";
 
 if ($totalPages > 1) {
     echo '<div class="pagination">';
 
-    // Prev
     if ($page > 1) {
         echo "<button class='btn btn-primary' onclick='loadProfitLoss(" . ($page - 1) . ")'>Prev</button>";
     }
@@ -228,7 +232,6 @@ if ($totalPages > 1) {
         echo "<button class='btn btn-secondary' onclick='loadProfitLoss($totalPages)'>$totalPages</button>";
     }
 
-    // Next
     if ($page < $totalPages) {
         echo "<button class='btn btn-primary' onclick='loadProfitLoss(" . ($page + 1) . ")'>Next</button>";
     }
@@ -238,36 +241,32 @@ if ($totalPages > 1) {
 
 echo "</td></tr>";
 
-$stmt->close();
-
 /* ------------------------------------------
-   GRAND TOTALS (based only on filters, NOT pagination)
+   6. GRAND TOTALS (based only on filters, NOT pagination)
+   We compute:
+     - total_qty_sold (active only)
+     - total_sales_active (active unit_price)
+     - total_returned_sales (returned * p.selling_price)
+     - net_sales = active - returned
+     - total_cost_active
+     - total_profit
 ------------------------------------------ */
 
 $totalsSql = "
     SELECT
-        SUM(
-            CASE WHEN s.status='returned' THEN -s.quantity ELSE s.quantity END
-        ) AS total_qty,
-
-        SUM(
-            CASE WHEN s.status='returned' THEN -(s.quantity * s.unit_price)
-                ELSE  (s.quantity * s.unit_price)
-            END
-        ) AS total_sales,
-
-        SUM(
-            CASE WHEN s.status='returned' THEN -(s.quantity * p.cost_price)
-                ELSE  (s.quantity * p.cost_price)
-            END
-        ) AS total_cost,
-
-        SUM(
-            CASE WHEN s.status='returned'
-                THEN -((s.unit_price - p.cost_price) * s.quantity)
-                ELSE  ((s.unit_price - p.cost_price) * s.quantity)
-            END
-        ) AS total_profit
+      SUM(CASE WHEN s.status = 'active' THEN s.quantity ELSE 0 END) AS total_qty_sold,
+      SUM(CASE WHEN s.status = 'active' THEN (s.quantity * s.unit_price) ELSE 0 END) AS total_sales_active,
+      SUM(CASE WHEN s.status = 'returned' THEN (s.quantity * p.selling_price) ELSE 0 END) AS total_returned_sales,
+      (SUM(CASE WHEN s.status = 'active' THEN (s.quantity * s.unit_price) ELSE 0 END)
+       - SUM(CASE WHEN s.status = 'returned' THEN (s.quantity * p.selling_price) ELSE 0 END)
+      ) AS net_sales,
+      SUM(CASE WHEN s.status = 'active' THEN (s.quantity * p.cost_price) ELSE 0 END) AS total_cost_active,
+      (
+        (SUM(CASE WHEN s.status = 'active' THEN (s.quantity * s.unit_price) ELSE 0 END)
+         - SUM(CASE WHEN s.status = 'returned' THEN (s.quantity * p.selling_price) ELSE 0 END)
+        )
+        - SUM(CASE WHEN s.status = 'active' THEN (s.quantity * p.cost_price) ELSE 0 END)
+      ) AS total_profit
     FROM Sales s
     JOIN Products p ON s.product_id = p.product_id
     JOIN Branches b ON s.branch_id = b.branch_id
@@ -280,21 +279,26 @@ $stmtTotals->execute();
 $gt = $stmtTotals->get_result()->fetch_assoc();
 $stmtTotals->close();
 
-$grandQty    = (int)($gt['total_qty'] ?? 0);
-$grandSales  = (float)($gt['total_sales'] ?? 0);
-$grandCost   = (float)($gt['total_cost'] ?? 0);
-$grandProfit = (float)($gt['total_profit'] ?? 0);
+$grandQtySold      = (int)($gt['total_qty_sold'] ?? 0);
+$grandSalesActive  = (float)($gt['total_sales_active'] ?? 0);
+$grandReturned     = (float)($gt['total_returned_sales'] ?? 0);
+$grandNetSales     = (float)($gt['net_sales'] ?? 0);
+$grandCostActive   = (float)($gt['total_cost_active'] ?? 0);
+$grandProfit       = (float)($gt['total_profit'] ?? 0);
 
 /* ------------------------------------------
    OUTPUT HIDDEN GRAND TOTALS BLOCK
+   (Front-end reads #profitLossTotalsData inside returned HTML)
 ------------------------------------------ */
 echo "
 <tr>
-    <td colspan='8' style='padding:0; border:none;'>
+    <td colspan='9' style='padding:0; border:none;'>
         <div id='profitLossTotalsData'
-             data-total-qty='{$grandQty}'
-             data-total-sales='{$grandSales}'
-             data-total-cost='{$grandCost}'
+             data-total-qty-sold='{$grandQtySold}'
+             data-total-sales-active='{$grandSalesActive}'
+             data-total-returned='{$grandReturned}'
+             data-net-sales='{$grandNetSales}'
+             data-total-cost='{$grandCostActive}'
              data-total-profit='{$grandProfit}'>
         </div>
     </td>
