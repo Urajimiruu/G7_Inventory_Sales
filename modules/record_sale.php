@@ -88,7 +88,7 @@ try {
         $invStmt->bind_param("iiii", $qty, $branchId, $pid, $qty);
         $invStmt->execute();
         if ($invStmt->affected_rows === 0) {
-            throw new Exception("Not enough stock for product: $pname.");
+            throw new Exception("Not enough stock for product: $pname, Available stocks = $oldQty.");
         }
 
         // Insert sale with final unit price (discounted if applicable)
