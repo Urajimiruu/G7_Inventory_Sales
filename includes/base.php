@@ -4,9 +4,28 @@ if (!isset($_SESSION["otp_verified"]) || !$_SESSION["otp_verified"]) {
     exit();
 }
 
-// variables expected from parent file: $role, $page, $title, $description
-?>
+// Expected variables (from admin.php or shop.php): 
+// $role, $page, $title, $description
 
+// ------------------------------------------------------------
+// 1. Resolve module path safely
+// ------------------------------------------------------------
+$modulePath = "modules/" . $page . ".php";
+
+// If the requested module does NOT exist → fallback to home.php
+if (!file_exists($modulePath)) {
+    $page = "home";
+    $modulePath = "modules/home.php";
+
+    // Optional: Also reset title & description to match the fallback page
+    if (isset($customTitles["home"])) {
+        $title = $customTitles["home"];
+    }
+    if (isset($descriptions["home"])) {
+        $description = $descriptions["home"];
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -33,7 +52,7 @@ if (!isset($_SESSION["otp_verified"]) || !$_SESSION["otp_verified"]) {
       </section>
 
       <section class="module-content">
-        <?php include "modules/$page.php"; ?>
+        <?php include $modulePath; ?>
       </section>
     </main>
   </div>
@@ -48,9 +67,8 @@ if (!isset($_SESSION["otp_verified"]) || !$_SESSION["otp_verified"]) {
         const arrow = this.querySelector(".arrow");
 
         const isOpen = parentLi.classList.toggle("open");
-        arrow.textContent = isOpen ? "▾" : "▸"; // change arrow direction
+        arrow.textContent = isOpen ? "▾" : "▸";
 
-        // Optional: close others
         dropdownButtons.forEach(otherBtn => {
           if (otherBtn !== button) {
             otherBtn.parentElement.classList.remove("open");
@@ -61,9 +79,7 @@ if (!isset($_SESSION["otp_verified"]) || !$_SESSION["otp_verified"]) {
       });
     });
   });
-
   </script>
-
 
 </body>
 </html>

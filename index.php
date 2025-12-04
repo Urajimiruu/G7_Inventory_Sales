@@ -1,5 +1,16 @@
 <?php
 session_start();
+
+// If user manually goes to index.php and is logged in → log them out
+if (isset($_SESSION["otp_verified"]) && $_SESSION["otp_verified"] === true) {
+    session_unset();
+    session_destroy();
+
+    // Optional: instantly refresh page so session is actually cleared
+    header("Location: index.php");
+    exit;
+}
+
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     unset($_SESSION["otp_sent"]);
 }
