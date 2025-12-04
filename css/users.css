@@ -552,6 +552,7 @@
   padding: 20px;
   background: #fff;
   border-radius: 10px;
+  margin-bottom: 100px;
 }
 
 .sale-report-header {
@@ -675,10 +676,22 @@
 }
 
 .sales-total-card-wrapper {
+    position: fixed;
+    bottom: 0;
+    left: 268px;
+    width: 82%;
+
     display: flex;
     gap: 20px;
-    margin-top: 20px;
+    padding: 10px 20px;
+
+    background: #fff;
+    border-top: 1px solid #ddd;
+    box-shadow: 0 -2px 5px rgba(0,0,0,0.08);
+    z-index: 10;
 }
+
+
 
 .sales-total-card {
     flex: 1;
