@@ -91,12 +91,14 @@ $unit = $conn->query("SELECT DISTINCT unit FROM Products");
 
       <div class="form-row">
         <label for="costPrice">Cost Price:</label>
-        <input type="number" id="costPrice" name="cost_price" placeholder="0.00" step="0.01" min="0" required>
+        <input type="number" id="costPrice" name="cost_price" placeholder="0.00" step="0.01" min="0" required 
+        oninput="preventNegative(this)">
       </div>
 
       <div class="form-row">
         <label for="sellingPrice">Selling Price:</label>
-        <input type="number" id="sellingPrice" name="selling_price" placeholder="0.00" step="0.01" min="0" required>
+        <input type="number" id="sellingPrice" name="selling_price" placeholder="0.00" step="0.01" min="0" required 
+        oninput="preventNegative(this)">
       </div>
 
       <div class="modal-buttons">
@@ -112,6 +114,12 @@ $unit = $conn->query("SELECT DISTINCT unit FROM Products");
 let currentProductId = null;
 
 let currentPage = 1;
+
+function preventNegative(input) {
+  if (input.value < 100) {
+    input.value = Math.abs(input.value);
+  }
+}
 
 function loadProducts(page = 1) {
     currentPage = page;

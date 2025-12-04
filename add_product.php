@@ -15,6 +15,21 @@ if ($unit == "") $errors[] = "Unit required.";
 if (!is_numeric($cost)) $errors[] = "Invalid cost price.";
 if (!is_numeric($sell)) $errors[] = "Invalid selling price.";
 
+
+if (empty($errors)) {
+    $checkStmt = $conn->prepare("SELECT product_id FROM Products WHERE product_name = ?");
+    $checkStmt->bind_param("s", $name);
+    $checkStmt->execute();
+    $checkStmt->store_result();
+    
+    if ($checkStmt->num_rows > 0) {
+        $errors[] = "Product name already exists. Please choose a different name.";
+    }
+    
+    $checkStmt->close();
+}
+
+
 if (!empty($errors)) {
     echo json_encode(["success" => false, "errors" => $errors]);
     exit;
