@@ -108,6 +108,7 @@ function getDashboardData($conn, $role, $branchId, $selectedMonth, $selectedBran
             AND $whereClause
         GROUP BY p.product_id, p.product_name
         ORDER BY total_quantity DESC
+        LIMIT 10
     ";
 
     $res = $conn->query($sql);
