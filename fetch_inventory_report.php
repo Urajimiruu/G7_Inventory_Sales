@@ -197,7 +197,7 @@ $stmt->close();
 /* ------------------------------------------
    6. PAGINATION OUTPUT
 ------------------------------------------ */
-echo "<tr><td colspan='8' style='text-align:center;'>";
+echo "<tr><td colspan='9' style='text-align:center;'>";
 
 if ($totalPages > 1) {
     echo '<div class="pagination">';
