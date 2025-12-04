@@ -528,8 +528,8 @@
 .inv-total-card-wrapper {
     position: fixed;
     bottom: 0;
-    left: 268px;       /* sidebar width */
-    right: 50px;          /* fill remaining space */
+    left: 265px;       /* sidebar width */
+    right: 35px;          /* fill remaining space */
     display: flex;
     flex-wrap: wrap;   /* allow cards to wrap */
     gap: 20px;
@@ -694,8 +694,8 @@
 .sales-total-card-wrapper {
     position: fixed;
     bottom: 0;
-    left: 268px;       /* sidebar width */
-    right: 50px;          /* fill remaining space */
+    left: 265px;       /* sidebar width */
+    right: 35px;          /* fill remaining space */
     display: flex;
     flex-wrap: wrap;   /* allow cards to wrap */
     gap: 20px;
@@ -901,8 +901,8 @@
 .pl-total-card-wrapper {
     position: fixed;
     bottom: 0;
-    left: 268px;       /* sidebar width */
-    right: 50px;          /* fill remaining space */
+    left: 265px;       /* sidebar width */
+    right: 35px;          /* fill remaining space */
     display: flex;
     flex-wrap: wrap;   /* allow cards to wrap */
     gap: 20px;
