@@ -524,30 +524,34 @@
     font-size: 1rem;
 }
 
+
 .inv-total-card-wrapper {
     position: fixed;
     bottom: 0;
-    left: 268px;
-    width: 82%;
-
+    left: 268px;       /* sidebar width */
+    right: 50px;          /* fill remaining space */
     display: flex;
+    flex-wrap: wrap;   /* allow cards to wrap */
     gap: 20px;
     padding: 10px 20px;
-
+    
     background: #fff;
     border-top: 1px solid #ddd;
     box-shadow: 0 -2px 5px rgba(0,0,0,0.08);
     z-index: 10;
+    box-sizing: border-box;
 }
 
 .inv-total-card {
-    flex: 1;
+    flex: 1 1 200px; /* grow, shrink, minimum width 200px */
     background: white;
     padding: 18px;
     border-radius: 8px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     text-align: center;
 }
+
+
 
 .inv-total-number {
     font-size: 1.6rem;  /* bigger numbers */
@@ -686,32 +690,42 @@
     font-size: 1rem;
 }
 
+
 .sales-total-card-wrapper {
     position: fixed;
     bottom: 0;
-    left: 268px;
-    width: 82%;
-
+    left: 268px;       /* sidebar width */
+    right: 50px;          /* fill remaining space */
     display: flex;
+    flex-wrap: wrap;   /* allow cards to wrap */
     gap: 20px;
     padding: 10px 20px;
-
+    
     background: #fff;
     border-top: 1px solid #ddd;
     box-shadow: 0 -2px 5px rgba(0,0,0,0.08);
     z-index: 10;
+    box-sizing: border-box;
 }
 
-
-
 .sales-total-card {
-    flex: 1;
+    flex: 1 1 200px; /* grow, shrink, minimum width 200px */
     background: white;
     padding: 18px;
     border-radius: 8px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     text-align: center;
 }
+
+
+/* .sales-total-card {
+    flex: 1;
+    background: white;
+    padding: 18px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    text-align: center;
+} */
 
 .sales-total-number {
     font-size: 1.6rem;  /* bigger numbers */
@@ -887,21 +901,22 @@
 .pl-total-card-wrapper {
     position: fixed;
     bottom: 0;
-    left: 268px;
-    width: 82%;
-
+    left: 268px;       /* sidebar width */
+    right: 50px;          /* fill remaining space */
     display: flex;
+    flex-wrap: wrap;   /* allow cards to wrap */
     gap: 20px;
     padding: 10px 20px;
-
+    
     background: #fff;
     border-top: 1px solid #ddd;
     box-shadow: 0 -2px 5px rgba(0,0,0,0.08);
     z-index: 10;
+    box-sizing: border-box;
 }
 
 .pl-total-card {
-    flex: 1;
+    flex: 1 1 200px; /* grow, shrink, minimum width 200px */
     background: white;
     padding: 18px;
     border-radius: 8px;
