@@ -16,6 +16,7 @@ $role = "shop";
 $allowedPages = [
     "home",
     "sales",
+    "returns",
     "branch_inventory",
     "report_sales",
     "report_profitloss",
@@ -38,6 +39,7 @@ $title = ucwords(str_replace('_', ' ', $page));
 $customTitles = [
     "home" => "Dashboard",
     "sales" => "Sales Transaction",
+    "Returns" => "Returns",
     "branch_inventory" => "Branch Inventory",
     "report_sales" => "Sales Report",
     "report_profitloss" => "Profit / Loss Report",
@@ -52,6 +54,7 @@ if (isset($customTitles[$page])) {
 $descriptions = [
     "home" => "Welcome to your dashboard overview. View current stock, sales history, and activity summary for this branch.",
     "sales" => "Manage and record sales transactions efficiently.",
+    "returns" => "Handle product returns and manage records.",
     "branch_inventory" => "Monitor inventory specific to this branch.",
     "report_sales" => "View detailed sales reports with customizable filters.",
     "report_profitloss" => "View profit and loss summary for this branch.",
